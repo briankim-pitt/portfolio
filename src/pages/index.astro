@@ -1,20 +1,88 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import ProfilePortrait from '../components/ProfilePortrait.astro';
+import WorkList from '../components/WorkList.astro';
+import artwork1 from '../../assets/Untitled_Artwork.png';
+import artwork2 from '../../assets/Untitled_Artwork 2.png';
+import artwork3 from '../../assets/Untitled_Artwork 3.png';
+import artwork4 from '../../assets/Untitled_Artwork 4.png';
+import artwork5 from '../../assets/Untitled_Artwork 5.png';
+import artwork6 from '../../assets/Untitled_Artwork 6.png';
+
+const artworks = [
+  { src: artwork1, alt: 'Painting of a black cat resting in a blue window surrounded by white blossoms.' },
+  { src: artwork2, alt: 'Painting of pink evening clouds over the sea, with reeds in the foreground.' },
+  { src: artwork3, alt: 'Painting of a lighthouse on a rocky shore under a pale moon.' },
+  { src: artwork4, alt: 'Painting of the sun setting over a quiet beach.' },
+  { src: artwork5, alt: 'Painting of a winding stream through green fields beneath distant mountains.' },
+  { src: artwork6, alt: 'Painting of a person sitting beside water at night, surrounded by warm reflections.' },
+];
 ---
 
-<Layout title="My Portfolio">
+<Layout title="brian kim">
   <main>
-    <p class="eyebrow">Personal portfolio</p>
-    <h1>A little space for what I make.</h1>
-    <p>Projects, ideas, and a bit about me. Coming soon.</p>
+    <header class="intro">
+      <div>
+        <p class="eyebrow">Personal portfolio</p>
+        <h1>brian kim</h1>
+        <p>Dev work, artwork, and ideas along the way.</p>
+        <p><a href="mailto:bri_kim@icloud.com">bri_kim@icloud.com</a></p>
+      </div>
+      <div class="profile">
+        <ProfilePortrait />
+      </div>
+    </header>
+
+    <div class="work-sections">
+      <section aria-labelledby="dev-work">
+        <h2 id="dev-work">Dev Work</h2>
+        <p>Selected projects and work.</p>
+        <ul class="links" aria-label="Work profiles">
+          <li><a href="https://github.com/briankim-pitt">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/br-kim/">LinkedIn</a></li>
+        </ul>
+        <WorkList />
+      </section>
+
+      <section aria-labelledby="artwork">
+        <h2 id="artwork">Artwork</h2>
+        <p>A space for my visual work.</p>
+        <div class="gallery">
+          {artworks.map((artwork) => (
+            <Image
+              src={artwork.src}
+              alt={artwork.alt}
+              width={720}
+              widths={[360, 720, 1080]}
+              sizes="(max-width: 36rem) calc(100vw - 3rem), (max-width: 63rem) calc((100vw - 5rem) / 2), 464px"
+              loading="lazy"
+            />
+          ))}
+        </div>
+      </section>
+    </div>
   </main>
 </Layout>
 
 <style>
   main {
-    width: min(100% - 3rem, 48rem);
+    width: min(100% - 3rem, 60rem);
     margin-inline: auto;
-    padding-block: clamp(5rem, 18vh, 12rem);
+    padding-block: clamp(3rem, 10vh, 7rem);
+  }
+
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 16rem;
+    align-items: center;
+    gap: 3rem;
+  }
+
+  .profile {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
   .eyebrow {
@@ -27,8 +95,72 @@ import Layout from '../layouts/Layout.astro';
   h1 {
     max-width: 14ch;
     margin-block: 1.5rem;
-    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-size: clamp(2.5rem, 6vw, 4rem);
     line-height: 1.1;
     letter-spacing: -0.04em;
+  }
+
+  .work-sections {
+    display: grid;
+    gap: 4rem;
+    margin-top: 5rem;
+  }
+
+  section {
+    border-top: 1px solid #ddd;
+    padding-top: 1.5rem;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  a {
+    color: inherit;
+    text-underline-offset: 0.25em;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  a:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 5px;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .gallery img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 36rem) {
+    .intro,
+    .gallery {
+      grid-template-columns: 1fr;
+    }
+
+    .profile {
+      width: 13rem;
+    }
   }
 </style>

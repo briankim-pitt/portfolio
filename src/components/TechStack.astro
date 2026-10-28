@@ -1,0 +1,86 @@
+---
+import {
+  siSwift,
+  siPython,
+  siDjango,
+  siRedis,
+  siApplemusic,
+  siFastapi,
+  siGoogledrive,
+  siSqlite,
+  siSupabase,
+  siPostgresql,
+  siTypescript,
+  siNodedotjs,
+  type SimpleIcon,
+} from 'simple-icons';
+import type { Technology } from '../data/work';
+
+interface Props {
+  items: Technology[];
+  label?: string;
+}
+
+const { items, label = 'Tech stack' } = Astro.props;
+
+const technologies: Record<Technology, { label: string; icon?: SimpleIcon }> = {
+  swiftui: { label: 'Swift / SwiftUI', icon: siSwift },
+  python: { label: 'Python', icon: siPython },
+  django: { label: 'Django / Ninja', icon: siDjango },
+  redis: { label: 'Redis', icon: siRedis },
+  applemusic: { label: 'Apple Music API', icon: siApplemusic },
+  fastapi: { label: 'FastAPI', icon: siFastapi },
+  openai: { label: 'OpenAI' },
+  googledrive: { label: 'Google Drive', icon: siGoogledrive },
+  sqlite: { label: 'SQLite', icon: siSqlite },
+  supabase: { label: 'Supabase', icon: siSupabase },
+  postgresql: { label: 'PostgreSQL', icon: siPostgresql },
+  typescript: { label: 'TypeScript', icon: siTypescript },
+  nodejs: { label: 'Node.js', icon: siNodedotjs },
+  evaluation: { label: 'LLM evaluation' },
+  rl: { label: 'RL environments' },
+  redteaming: { label: 'Red teaming' },
+};
+---
+
+<ul class="tech-stack" aria-label={label}>
+  {items.map((item) => {
+    const technology = technologies[item];
+    return (
+      <li>
+        {technology.icon && (
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d={technology.icon.path} />
+          </svg>
+        )}
+        <span>{technology.label}</span>
+      </li>
+    );
+  })}
+</ul>
+
+<style>
+  .tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.1rem;
+    padding: 0;
+    margin: 1.25rem 0 0;
+    list-style: none;
+    color: #666;
+    font-size: 0.8rem;
+  }
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    fill: currentColor;
+  }
+</style>
