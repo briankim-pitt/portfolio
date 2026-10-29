@@ -88,8 +88,12 @@ import LinkPreview from './LinkPreview.astro';
   }
 
   a {
-    color: inherit;
+    color: var(--accent-color);
     text-underline-offset: 0.25em;
+  }
+
+  a:hover {
+    color: var(--accent-hover);
   }
 
   a:focus-visible {

@@ -1,0 +1,145 @@
+<circle-cursor aria-hidden="true"><span></span></circle-cursor>
+
+<script>
+  class CircleCursor extends HTMLElement {
+    private cleanup?: () => void;
+
+    connectedCallback() {
+      const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+      const clickable = 'a[href], button:enabled, summary, [role="button"]:not([aria-disabled="true"]), input:enabled, select:enabled, label[for]';
+      let x = 0;
+      let y = 0;
+      let frame = 0;
+      let active = false;
+
+      const render = () => {
+        frame = 0;
+        this.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        this.toggleAttribute('data-hover', Boolean(document.elementFromPoint(x, y)?.closest(clickable)));
+        this.setAttribute('data-visible', '');
+        document.documentElement.classList.add('has-circle-cursor');
+      };
+
+      const schedule = () => {
+        if (active && !frame) frame = window.requestAnimationFrame(render);
+      };
+
+      const hide = () => {
+        active = false;
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+        this.removeAttribute('data-visible');
+        this.removeAttribute('data-hover');
+        document.documentElement.classList.remove('has-circle-cursor');
+      };
+
+      const move = (event: PointerEvent) => {
+        if (!finePointer.matches || event.pointerType !== 'mouse') {
+          hide();
+          return;
+        }
+
+        x = event.clientX;
+        y = event.clientY;
+        active = true;
+        schedule();
+      };
+
+      const leave = (event: PointerEvent) => {
+        if (!event.relatedTarget) hide();
+      };
+
+      const visibility = () => {
+        if (document.hidden) hide();
+      };
+
+      window.addEventListener('pointermove', move, { passive: true });
+      window.addEventListener('pointerout', leave);
+      window.addEventListener('blur', hide);
+      window.addEventListener('resize', schedule);
+      document.addEventListener('scroll', schedule, { capture: true, passive: true });
+      document.addEventListener('visibilitychange', visibility);
+      document.addEventListener('contextmenu', hide);
+      finePointer.addEventListener('change', hide);
+
+      this.cleanup = () => {
+        hide();
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerout', leave);
+        window.removeEventListener('blur', hide);
+        window.removeEventListener('resize', schedule);
+        document.removeEventListener('scroll', schedule, true);
+        document.removeEventListener('visibilitychange', visibility);
+        document.removeEventListener('contextmenu', hide);
+        finePointer.removeEventListener('change', hide);
+      };
+    }
+
+    disconnectedCallback() {
+      this.cleanup?.();
+    }
+  }
+
+  if (!customElements.get('circle-cursor')) {
+    customElements.define('circle-cursor', CircleCursor);
+  }
+</script>
+
+<style>
+  circle-cursor {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    z-index: 2147483647;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  circle-cursor[data-visible] {
+    visibility: visible;
+  }
+
+  span {
+    display: block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--accent-color);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    transition:
+      transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      background-color 180ms ease,
+      opacity 180ms ease;
+  }
+
+  circle-cursor[data-hover] span {
+    transform: translate(-50%, -50%) scale(0.6);
+    background-color: #808080;
+    opacity: 0.7;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    circle-cursor {
+      display: block;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    span {
+      transition: none;
+    }
+  }
+</style>
+
+<style is:global>
+  @media (hover: hover) and (pointer: fine) {
+    html.has-circle-cursor,
+    html.has-circle-cursor * {
+      cursor: none !important;
+    }
+  }
+</style>

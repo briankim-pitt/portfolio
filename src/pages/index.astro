@@ -86,6 +86,7 @@ const artworks = [
   }
 
   .eyebrow {
+    color: var(--accent-color);
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.12em;
@@ -102,27 +103,31 @@ const artworks = [
 
   .work-sections {
     display: grid;
-    gap: 4rem;
+    gap: clamp(5rem, 10vw, 9rem);
     margin-top: 5rem;
   }
 
   section {
     border-top: 1px solid #ddd;
-    padding-top: 1.5rem;
+    padding-top: clamp(2rem, 6vw, 4rem);
   }
 
   h2 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
+    margin: 0 0 clamp(2rem, 6vw, 5rem);
+    font-size: clamp(3.25rem, 11vw, 9rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.065em;
+    text-align: left;
   }
 
   a {
-    color: inherit;
+    color: var(--accent-color);
     text-underline-offset: 0.25em;
   }
 
   a:hover {
+    color: var(--accent-hover);
     text-decoration-thickness: 2px;
   }
 

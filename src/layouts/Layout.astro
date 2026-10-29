@@ -1,4 +1,6 @@
 ---
+import CircleCursor from '../components/CircleCursor.astro';
+
 interface Props {
   title: string;
   description?: string;
@@ -22,12 +24,15 @@ const {
   </head>
   <body>
     <slot />
+    <CircleCursor />
   </body>
 </html>
 
 <style is:global>
   :root {
     --page-background: #fff;
+    --accent-color: #003dff;
+    --accent-hover: #002dbd;
     font-family: system-ui, sans-serif;
     color: #222;
     background: var(--page-background);
@@ -40,5 +45,22 @@ const {
 
   body {
     margin: 0;
+  }
+
+  ::selection {
+    color: #fff;
+    background: var(--accent-color);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    body,
+    body * {
+      cursor: url('/cursor.svg') 16 16, auto;
+    }
+
+    body :is(a[href], button:enabled, summary, [role='button'], input:enabled, select:enabled),
+    body :is(a[href], button:enabled, summary, [role='button'], input:enabled, select:enabled) * {
+      cursor: url('/cursor-hover.svg') 16 16, pointer;
+    }
   }
 </style>
