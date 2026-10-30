@@ -1,6 +1,8 @@
 import type { ImageMetadata } from 'astro';
 import sudoL7Preview from '../assets/link-previews/sudo-l7.webp';
 import tempoPreview from '../assets/link-previews/tempo.jpg';
+import tempoLogo from '../assets/project-logos/tempo.png';
+import wanderCartLogo from '../assets/project-logos/wandercart.svg?url';
 
 export type Technology =
   | 'swiftui'
@@ -22,6 +24,7 @@ export type Technology =
 
 interface WorkItem {
   title: string;
+  logo?: { src: string; width: number; height: number };
   category: string;
   href: string;
   role?: string;
@@ -65,6 +68,7 @@ export const work: WorkItem[] = [
   },
   {
     title: 'Tempo',
+    logo: { src: tempoLogo.src, width: tempoLogo.width, height: tempoLogo.height },
     category: 'iOS app',
     href: 'https://www.ourtempo.app',
     description:
@@ -95,6 +99,7 @@ export const work: WorkItem[] = [
   },
   {
     title: 'WanderCart',
+    logo: { src: wanderCartLogo, width: 212, height: 42 },
     category: 'iOS app',
     href: 'https://github.com/briankim-pitt/ShoppingApp',
     description:

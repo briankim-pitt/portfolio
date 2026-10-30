@@ -34,30 +34,31 @@ const { href, label, title, description, site, image } = Astro.props;
   .label {
     margin: 0 0 0.6rem;
     font-size: 0.8rem;
-    color: #666;
+    color: var(--text-muted);
   }
 
   .preview-card {
     display: grid;
     grid-template-columns: 8rem minmax(0, 1fr);
     overflow: hidden;
-    border: 1px solid #ddd;
+    border: 1px solid var(--divider-color);
     border-radius: 4px;
     color: inherit;
+    background: var(--preview-background);
     text-decoration: none;
   }
 
   .preview-card:hover {
-    border-color: var(--accent-color);
+    border-color: var(--focus-color);
   }
 
   .preview-card:hover strong,
   .preview-card:focus-visible strong {
-    color: var(--accent-color);
+    color: var(--link-hover);
   }
 
   .preview-card:focus-visible {
-    outline: 2px solid var(--accent-color);
+    outline: 2px solid var(--focus-color);
     outline-offset: 4px;
   }
 
@@ -81,12 +82,12 @@ const { href, label, title, description, site, image } = Astro.props;
     display: flex;
     justify-content: space-between;
     width: 100%;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.7rem;
   }
 
   .site > span {
-    color: var(--accent-color);
+    color: var(--link-color);
   }
 
   strong {
@@ -96,7 +97,7 @@ const { href, label, title, description, site, image } = Astro.props;
   }
 
   .summary {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.8rem;
     line-height: 1.5;
   }
@@ -109,7 +110,7 @@ const { href, label, title, description, site, image } = Astro.props;
     img {
       height: 9rem;
       object-fit: contain;
-      background: #fafafa;
+      background: var(--preview-background);
     }
   }
 </style>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="212" height="42" viewBox="0 0 212 42" fill="none">
+  <svg x="0" y="3" width="44" height="36" viewBox="0 0 44 36" overflow="visible">
+    <path d="M3.52 4.32H10.12L16.72 24.48L23.32 12.6L30.8 24.48L40.04 10.08" stroke="#7b4dff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="16.72" cy="32.4" r="2.86" fill="#7b4dff"/>
+    <circle cx="31.68" cy="32.4" r="2.86" fill="#7b4dff"/>
+  </svg>
+  <text x="49" y="31" fill="white" font-family="system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="700">anderCart</text>
+</svg>

@@ -1,5 +1,8 @@
 ---
+import Analytics from '@vercel/analytics/astro';
 import CircleCursor from '../components/CircleCursor.astro';
+import SmoothScroll from '../components/SmoothScroll.astro';
+import ScrollReveal from '../components/ScrollReveal.astro';
 
 interface Props {
   title: string;
@@ -21,20 +24,33 @@ const {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <Analytics />
   </head>
   <body>
     <slot />
     <CircleCursor />
+    <SmoothScroll />
+    <ScrollReveal />
   </body>
 </html>
 
 <style is:global>
   :root {
-    --page-background: #fff;
+    --page-background: #f7f7f7;
+    --panel-background: #0f0f0f;
+    --text-primary: #222;
+    --text-secondary: #444;
+    --text-muted: #666;
+    --divider-color: #ddd;
+    --divider-subtle: #eee;
     --accent-color: #003dff;
     --accent-hover: #002dbd;
+    --link-color: var(--accent-color);
+    --link-hover: var(--accent-hover);
+    --focus-color: var(--accent-color);
+    --preview-background: #fafafa;
     font-family: system-ui, sans-serif;
-    color: #222;
+    color: var(--text-primary);
     background: var(--page-background);
     line-height: 1.6;
   }
@@ -50,6 +66,28 @@ const {
   ::selection {
     color: #fff;
     background: var(--accent-color);
+  }
+
+  @keyframes enter-view {
+    from {
+      opacity: 0;
+      transform: translate3d(0, var(--enter-distance, 24px), 0);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    [data-enter][data-reveal='pending'] {
+      opacity: 0;
+    }
+
+    [data-enter][data-reveal='visible'] {
+      animation: enter-view 600ms cubic-bezier(0.22, 1, 0.36, 1) var(--enter-delay, 0ms) backwards;
+    }
   }
 
   @media (hover: hover) and (pointer: fine) {

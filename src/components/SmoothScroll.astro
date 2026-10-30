@@ -1,0 +1,96 @@
+---
+import 'lenis/dist/lenis.css';
+---
+
+<smooth-scroll hidden></smooth-scroll>
+
+<script>
+  import Lenis from 'lenis';
+
+  class SmoothScroll extends HTMLElement {
+    private lenis?: Lenis;
+    private cleanup?: () => void;
+
+    connectedCallback() {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      const previousRestoration = window.history.scrollRestoration;
+      const startAtTop = navigation?.type !== 'back_forward' && !window.location.hash;
+      if (startAtTop) window.history.scrollRestoration = 'manual';
+
+      const start = () => {
+        if (reducedMotion.matches || this.lenis) return;
+
+        this.lenis = new Lenis({
+          autoRaf: true,
+          lerp: 0.085,
+          smoothWheel: true,
+          syncTouch: false,
+          anchors: true,
+        });
+      };
+
+      const stop = () => {
+        this.lenis?.destroy();
+        this.lenis = undefined;
+      };
+
+      const updatePreference = () => {
+        stop();
+        start();
+      };
+
+      const scrollToTop = () => {
+        if (this.lenis) {
+          this.lenis.scrollTo(0, { immediate: true });
+        } else {
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        }
+      };
+
+      const resetFreshVisit = () => {
+        if (!startAtTop || window.location.hash) return;
+        scrollToTop();
+      };
+
+      const revealBaseOnFocus = (event: FocusEvent) => {
+        if (!(event.target instanceof Element) || !event.target.closest('[data-base-layer]')) return;
+        const contentLayer = document.querySelector('[data-content-layer]');
+        if (contentLayer && contentLayer.getBoundingClientRect().top <= 0) scrollToTop();
+      };
+
+      const showPage = (event: PageTransitionEvent) => {
+        start();
+        if (!event.persisted) resetFreshVisit();
+      };
+
+      const hidePage = () => {
+        stop();
+        window.history.scrollRestoration = previousRestoration;
+      };
+
+      reducedMotion.addEventListener('change', updatePreference);
+      window.addEventListener('pagehide', hidePage);
+      window.addEventListener('pageshow', showPage);
+      document.addEventListener('focusin', revealBaseOnFocus);
+      start();
+      resetFreshVisit();
+
+      this.cleanup = () => {
+        hidePage();
+        reducedMotion.removeEventListener('change', updatePreference);
+        window.removeEventListener('pagehide', hidePage);
+        window.removeEventListener('pageshow', showPage);
+        document.removeEventListener('focusin', revealBaseOnFocus);
+      };
+    }
+
+    disconnectedCallback() {
+      this.cleanup?.();
+    }
+  }
+
+  if (!customElements.get('smooth-scroll')) {
+    customElements.define('smooth-scroll', SmoothScroll);
+  }
+</script>

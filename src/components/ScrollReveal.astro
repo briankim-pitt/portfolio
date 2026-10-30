@@ -1,0 +1,97 @@
+<scroll-reveal hidden></scroll-reveal>
+
+<script>
+  class ScrollReveal extends HTMLElement {
+    private cleanup?: () => void;
+
+    connectedCallback() {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (reducedMotion.matches || !('IntersectionObserver' in window)) return;
+
+      const elements = [...document.querySelectorAll<HTMLElement>('[data-enter]')];
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          const element = entry.target as HTMLElement;
+          // Reveal after most of the element is visible. Oversized elements
+          // use the viewport height so they can still reach the trigger.
+          const viewportHeight = entry.rootBounds?.height ?? window.innerHeight;
+          const requiredHeight = Math.min(entry.boundingClientRect.height, viewportHeight) * 0.7;
+          if (
+            entry.isIntersecting &&
+            entry.intersectionRect.height >= requiredHeight &&
+            element.dataset.reveal === 'pending'
+          ) {
+            const viewportBottom = entry.rootBounds?.bottom ?? window.innerHeight;
+            const distance = Math.max(24, viewportBottom - entry.boundingClientRect.top + 12);
+            element.style.setProperty('--enter-distance', `${distance}px`);
+            element.dataset.reveal = 'visible';
+          }
+        }
+      }, {
+        threshold: Array.from({ length: 21 }, (_, index) => index / 20),
+      });
+
+      // Only reset below the viewport. Content above it stays loaded, including
+      // elements skipped by a fast scroll. The buffer contains the slide start.
+      const resetObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) continue;
+          const element = entry.target as HTMLElement;
+          const bottom = entry.rootBounds?.bottom ?? window.innerHeight + 64;
+          const top = entry.rootBounds?.top ?? -64;
+          if (entry.boundingClientRect.top >= bottom) {
+            element.dataset.reveal = 'pending';
+          } else if (entry.boundingClientRect.bottom <= top) {
+            element.dataset.reveal = 'instant';
+          }
+        }
+      }, { rootMargin: '64px', threshold: 0 });
+
+      for (const element of elements) {
+        const bounds = element.getBoundingClientRect();
+        element.dataset.reveal = bounds.top < 0 || bounds.bottom <= window.innerHeight
+          ? 'instant'
+          : 'pending';
+        observer.observe(element);
+        resetObserver.observe(element);
+      }
+
+      // Keyboard focus should never land on an invisible link.
+      const revealFocused = (event: FocusEvent) => {
+        if (!(event.target instanceof Element)) return;
+        const element = event.target.closest<HTMLElement>('[data-enter]');
+        if (!element) return;
+        element.dataset.reveal = 'instant';
+      };
+
+      const updatePreference = () => {
+        if (!reducedMotion.matches) return;
+        observer.disconnect();
+        resetObserver.disconnect();
+        for (const element of elements) element.dataset.reveal = 'instant';
+      };
+
+      document.addEventListener('focusin', revealFocused);
+      reducedMotion.addEventListener('change', updatePreference);
+
+      this.cleanup = () => {
+        observer.disconnect();
+        resetObserver.disconnect();
+        document.removeEventListener('focusin', revealFocused);
+        reducedMotion.removeEventListener('change', updatePreference);
+        for (const element of elements) {
+          delete element.dataset.reveal;
+          element.style.removeProperty('--enter-distance');
+        }
+      };
+    }
+
+    disconnectedCallback() {
+      this.cleanup?.();
+    }
+  }
+
+  if (!customElements.get('scroll-reveal')) {
+    customElements.define('scroll-reveal', ScrollReveal);
+  }
+</script>

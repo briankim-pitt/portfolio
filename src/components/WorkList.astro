@@ -5,11 +5,17 @@ import LinkPreview from './LinkPreview.astro';
 ---
 
 <div class="work-list">
-  {work.map((item) => (
-    <article class="work-item">
+  {work.map((item, index) => (
+    <article class="work-item" data-enter style={`--enter-delay: ${(index % 2) * 60}ms`}>
       <div>
         <p class="category">{item.category}</p>
-        <h3><a href={item.href}>{item.title}</a></h3>
+        <h3>
+          <a href={item.href}>
+            {item.logo ? (
+              <img class="project-logo" src={item.logo.src} width={item.logo.width} height={item.logo.height} alt={item.title} loading="lazy" />
+            ) : item.title}
+          </a>
+        </h3>
         {item.role && <p class="role">{item.role}</p>}
         {item.period && <p class="period">{item.period}</p>}
       </div>
@@ -30,7 +36,7 @@ import LinkPreview from './LinkPreview.astro';
 
 <style>
   .work-list {
-    margin-top: 2.5rem;
+    container-type: inline-size;
   }
 
   .work-item {
@@ -49,12 +55,12 @@ import LinkPreview from './LinkPreview.astro';
   }
 
   .work-item + .work-item {
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--divider-subtle);
   }
 
   .category {
     margin: 0 0 0.5rem;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.75rem;
   }
 
@@ -66,7 +72,16 @@ import LinkPreview from './LinkPreview.astro';
   }
 
   h3 a {
+    display: inline-block;
+    max-width: 100%;
     text-decoration: none;
+  }
+
+  .project-logo {
+    display: block;
+    width: 10rem;
+    max-width: 100%;
+    height: auto;
   }
 
   h3 a:hover {
@@ -76,24 +91,24 @@ import LinkPreview from './LinkPreview.astro';
   .role,
   .period {
     margin: 0.6rem 0 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.8rem;
   }
 
   .description {
     max-width: 62ch;
     margin: 0;
-    color: #444;
+    color: var(--text-secondary);
     line-height: 1.75;
   }
 
   a {
-    color: var(--accent-color);
+    color: var(--link-color);
     text-underline-offset: 0.25em;
   }
 
   a:hover {
-    color: var(--accent-hover);
+    color: var(--link-hover);
   }
 
   a:focus-visible {
@@ -108,6 +123,13 @@ import LinkPreview from './LinkPreview.astro';
   }
 
   @media (max-width: 45rem) {
+    .work-item {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  @container (max-width: 40rem) {
     .work-item {
       grid-template-columns: 1fr;
       gap: 1rem;

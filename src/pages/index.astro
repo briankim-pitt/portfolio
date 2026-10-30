@@ -22,40 +22,48 @@ const artworks = [
 
 <Layout title="brian kim">
   <main>
-    <header class="intro">
+    <header class="intro" data-base-layer>
       <div>
-        <p class="eyebrow">Personal portfolio</p>
-        <h1>brian kim</h1>
-        <p>Dev work, artwork, and ideas along the way.</p>
-        <p><a href="mailto:bri_kim@icloud.com">bri_kim@icloud.com</a></p>
+        <p class="eyebrow" data-enter>Personal portfolio</p>
+        <h1 data-enter style="--enter-delay: 60ms">brian kim</h1>
+        <p data-enter style="--enter-delay: 120ms">Dev work, artwork, and ideas along the way.</p>
+        <p data-enter style="--enter-delay: 180ms"><a href="mailto:bri_kim@icloud.com">bri_kim@icloud.com</a></p>
       </div>
-      <div class="profile">
+      <div class="profile" data-enter style="--enter-delay: 120ms">
         <ProfilePortrait />
       </div>
     </header>
 
-    <div class="work-sections">
-      <section aria-labelledby="dev-work">
-        <h2 id="dev-work">Dev Work</h2>
-        <p>Selected projects and work.</p>
-        <ul class="links" aria-label="Work profiles">
-          <li><a href="https://github.com/briankim-pitt">GitHub</a></li>
-          <li><a href="https://www.linkedin.com/in/br-kim/">LinkedIn</a></li>
-        </ul>
-        <WorkList />
+    <div class="work-sections" data-content-layer>
+      <section class="dev-work" aria-labelledby="dev-work">
+        <header class="section-heading">
+          <h2 id="dev-work" data-enter>Dev Work</h2>
+          <p data-enter style="--enter-delay: 60ms">Selected projects and work.</p>
+          <ul class="links" aria-label="Work profiles" data-enter style="--enter-delay: 120ms">
+            <li><a href="https://github.com/briankim-pitt">GitHub</a></li>
+            <li><a href="https://www.linkedin.com/in/br-kim/">LinkedIn</a></li>
+          </ul>
+        </header>
+        <div class="section-content">
+          <WorkList />
+        </div>
       </section>
 
       <section aria-labelledby="artwork">
-        <h2 id="artwork">Artwork</h2>
-        <p>A space for my visual work.</p>
-        <div class="gallery">
-          {artworks.map((artwork) => (
+        <header class="section-heading">
+          <h2 id="artwork" data-enter>Artwork</h2>
+          <p data-enter style="--enter-delay: 60ms">A space for my visual work.</p>
+        </header>
+        <div class="section-content gallery">
+          {artworks.map((artwork, index) => (
             <Image
+              data-enter
+              style={`--enter-delay: ${(index % 2) * 80}ms`}
               src={artwork.src}
               alt={artwork.alt}
               width={720}
-              widths={[360, 720, 1080]}
-              sizes="(max-width: 36rem) calc(100vw - 3rem), (max-width: 63rem) calc((100vw - 5rem) / 2), 464px"
+              widths={[360, 720, 1080, 1440]}
+              sizes="(min-width: 70rem) 26vw, (max-width: 36rem) calc(100vw - 2rem), (max-width: 50rem) calc((100vw - 4rem) / 2), calc(48vw - 1rem)"
               loading="lazy"
             />
           ))}
@@ -67,16 +75,20 @@ const artworks = [
 
 <style>
   main {
-    width: min(100% - 3rem, 60rem);
-    margin-inline: auto;
-    padding-block: clamp(3rem, 10vh, 7rem);
+    --page-gutter: clamp(1rem, 2vw, 2rem);
+    isolation: isolate;
   }
 
   .intro {
+    position: relative;
+    z-index: 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 16rem;
     align-items: center;
     gap: 3rem;
+    min-height: 100svh;
+    padding: clamp(3rem, 10vh, 7rem) var(--page-gutter);
+    background: var(--page-background);
   }
 
   .profile {
@@ -102,32 +114,76 @@ const artworks = [
   }
 
   .work-sections {
+    --text-primary: #fff;
+    --text-secondary: #f0f0f0;
+    --text-muted: #c2c2c2;
+    --divider-color: #484848;
+    --divider-subtle: #3b3b3b;
+    --link-color: #fff;
+    --link-hover: #b8c7ff;
+    --focus-color: #9cb2ff;
+    --preview-background: #2c2c2c;
+    position: relative;
+    z-index: 1;
     display: grid;
     gap: clamp(5rem, 10vw, 9rem);
-    margin-top: 5rem;
+    margin-top: -2rem;
+    padding: clamp(3rem, 6vw, 5rem) var(--page-gutter) clamp(4rem, 10vh, 7rem);
+    background: var(--panel-background);
+    color: var(--text-primary);
+    box-shadow: 0 -1rem 4rem rgb(0 0 0 / 16%);
   }
 
   section {
-    border-top: 1px solid #ddd;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 2rem;
+    border-top: 1px solid var(--divider-color);
     padding-top: clamp(2rem, 6vw, 4rem);
+  }
+
+  section:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .dev-work {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .dev-work::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: calc(-1 * clamp(3rem, 6vw, 5rem)) calc(-1 * var(--page-gutter)) -2.5rem;
+    background-image: radial-gradient(circle, #3a3a3a 1px, transparent 1.5px);
+    background-size: 12.5vw 12.5vw;
+    pointer-events: none;
+  }
+
+  .section-content {
+    min-width: 0;
   }
 
   h2 {
     margin: 0 0 clamp(2rem, 6vw, 5rem);
-    font-size: clamp(3.25rem, 11vw, 9rem);
+    font-size: clamp(4.225rem, 14.3vw, 11.7rem);
     font-weight: 400;
     line-height: 0.95;
     letter-spacing: -0.065em;
     text-align: left;
+    scroll-margin-top: 2rem;
   }
 
   a {
-    color: var(--accent-color);
+    color: var(--link-color);
     text-underline-offset: 0.25em;
   }
 
   a:hover {
-    color: var(--accent-hover);
+    color: var(--link-hover);
     text-decoration-thickness: 2px;
   }
 
@@ -149,13 +205,38 @@ const artworks = [
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
     gap: 2rem;
-    margin-top: 2rem;
   }
 
   .gallery img {
     display: block;
     width: 100%;
     height: auto;
+  }
+
+  @media (min-width: 48rem) and (min-height: 40rem) {
+    .intro {
+      position: sticky;
+      top: 0;
+    }
+  }
+
+  @media (min-width: 70rem) {
+    section {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: clamp(3rem, 6vw, 7rem);
+    }
+
+    .section-heading {
+      position: sticky;
+      top: 2rem;
+      align-self: start;
+      min-width: 0;
+      container-type: inline-size;
+    }
+
+    h2 {
+      font-size: clamp(4.225rem, 28cqw, 11.7rem);
+    }
   }
 
   @media (max-width: 36rem) {
