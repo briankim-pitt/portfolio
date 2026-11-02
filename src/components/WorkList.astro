@@ -4,58 +4,159 @@ import TechStack from './TechStack.astro';
 import LinkPreview from './LinkPreview.astro';
 ---
 
-<div class="work-list">
+<magnetic-cards class="work-grid">
   {work.map((item, index) => (
-    <article class="work-item" data-enter style={`--enter-delay: ${(index % 2) * 60}ms`}>
-      <div>
-        <p class="category">{item.category}</p>
-        <h3>
-          <a href={item.href}>
-            {item.logo ? (
-              <img class="project-logo" src={item.logo.src} width={item.logo.width} height={item.logo.height} alt={item.title} loading="lazy" />
-            ) : item.title}
-          </a>
-        </h3>
-        {item.role && <p class="role">{item.role}</p>}
-        {item.period && <p class="period">{item.period}</p>}
-      </div>
-      <div>
-        <p class="description">{item.description}</p>
-        <TechStack items={item.technologies} label={item.stackLabel} />
-        {item.link?.preview ? (
-          <LinkPreview href={item.link.href} label={item.link.label} {...item.link.preview} />
-        ) : item.link && (
-          <a class="detail-link" href={item.link.href}>
-            {item.link.label} <span aria-hidden="true">↗</span>
-          </a>
-        )}
-      </div>
-    </article>
+    <div class="card-slot" data-enter style={`--enter-delay: ${(index % 2) * 60}ms`}>
+      <article class="work-card">
+        <div class="card-content">
+          <div>
+            <p class="category">{item.category}</p>
+            <h3>
+              <a href={item.href}>
+                {item.logo ? (
+                  <img class="project-logo" src={item.logo.src} width={item.logo.width} height={item.logo.height} alt={item.title} loading="lazy" />
+                ) : item.title}
+              </a>
+            </h3>
+            {item.role && <p class="role">{item.role}</p>}
+            {item.period && <p class="period">{item.period}</p>}
+          </div>
+          <div>
+            <p class="description">{item.description}</p>
+            <TechStack items={item.technologies} label={item.stackLabel} />
+            {item.link?.preview ? (
+              <LinkPreview href={item.link.href} label={item.link.label} {...item.link.preview} />
+            ) : item.link && (
+              <a class="detail-link" href={item.link.href}>
+                {item.link.label} <span aria-hidden="true">↗</span>
+              </a>
+            )}
+          </div>
+        </div>
+      </article>
+    </div>
   ))}
-</div>
+</magnetic-cards>
+
+<script>
+  class MagneticCards extends HTMLElement {
+    private cleanup?: () => void;
+
+    connectedCallback() {
+      const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const cleanups = [...this.querySelectorAll<HTMLElement>('.card-slot')].map((slot) => {
+        const card = slot.querySelector<HTMLElement>('.work-card');
+        if (!card) return () => {};
+        let frame = 0;
+        let pointerX = 0;
+        let pointerY = 0;
+
+        const reset = () => {
+          cancelAnimationFrame(frame);
+          frame = 0;
+          card.style.removeProperty('--magnet-x');
+          card.style.removeProperty('--magnet-y');
+        };
+
+        const render = () => {
+          frame = 0;
+          // The frame stays fixed; only its inset content follows the pointer.
+          const bounds = slot.getBoundingClientRect();
+          const x = Math.max(-1, Math.min(1, (pointerX - bounds.left) / bounds.width * 2 - 1));
+          const y = Math.max(-1, Math.min(1, (pointerY - bounds.top) / bounds.height * 2 - 1));
+          card.style.setProperty('--magnet-x', `${x * 10}px`);
+          card.style.setProperty('--magnet-y', `${y * 8}px`);
+        };
+
+        const move = (event: PointerEvent) => {
+          if (!finePointer.matches || reducedMotion.matches || event.pointerType !== 'mouse') return;
+          pointerX = event.clientX;
+          pointerY = event.clientY;
+          if (!frame) frame = requestAnimationFrame(render);
+        };
+
+        slot.addEventListener('pointermove', move, { passive: true });
+        slot.addEventListener('pointerleave', reset);
+        slot.addEventListener('pointercancel', reset);
+        slot.addEventListener('focusin', reset);
+        window.addEventListener('blur', reset);
+        window.addEventListener('scroll', reset, { passive: true });
+        finePointer.addEventListener('change', reset);
+        reducedMotion.addEventListener('change', reset);
+
+        return () => {
+          reset();
+          slot.removeEventListener('pointermove', move);
+          slot.removeEventListener('pointerleave', reset);
+          slot.removeEventListener('pointercancel', reset);
+          slot.removeEventListener('focusin', reset);
+          window.removeEventListener('blur', reset);
+          window.removeEventListener('scroll', reset);
+          finePointer.removeEventListener('change', reset);
+          reducedMotion.removeEventListener('change', reset);
+        };
+      });
+      this.cleanup = () => cleanups.forEach((cleanup) => cleanup());
+    }
+
+    disconnectedCallback() {
+      this.cleanup?.();
+    }
+  }
+
+  if (!customElements.get('magnetic-cards')) {
+    customElements.define('magnetic-cards', MagneticCards);
+  }
+</script>
 
 <style>
-  .work-list {
-    container-type: inline-size;
-  }
-
-  .work-item {
+  .work-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    gap: 2.5rem;
-    padding-block: 2.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
   }
 
-  .work-item:first-child {
-    padding-top: 0;
+  .card-slot {
+    min-width: 0;
   }
 
-  .work-item:last-child {
-    padding-bottom: 0;
+  .work-card {
+    container-type: inline-size;
+    overflow: hidden;
+    min-width: 0;
+    height: 100%;
+    padding: clamp(1.25rem, 2vw, 2rem);
+    border: 1px solid var(--divider-subtle);
+    border-radius: 0;
+    background: #1b1b1b;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+    transition: border-color 250ms ease, box-shadow 350ms ease;
   }
 
-  .work-item + .work-item {
-    border-top: 1px solid var(--divider-subtle);
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    min-width: 0;
+    height: 100%;
+  }
+
+  .work-card:focus-within {
+    border-color: var(--focus-color);
+  }
+
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .card-content {
+      transform: translate3d(var(--magnet-x, 0px), var(--magnet-y, 0px), 0);
+      transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .card-slot:hover .work-card {
+      border-color: #666;
+      box-shadow: 0 18px 40px rgb(0 0 0 / 24%);
+    }
   }
 
   .category {
@@ -122,17 +223,4 @@ import LinkPreview from './LinkPreview.astro';
     font-size: 0.85rem;
   }
 
-  @media (max-width: 45rem) {
-    .work-item {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-  }
-
-  @container (max-width: 40rem) {
-    .work-item {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-  }
 </style>

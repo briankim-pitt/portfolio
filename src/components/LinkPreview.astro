@@ -42,7 +42,7 @@ const { href, label, title, description, site, image } = Astro.props;
     grid-template-columns: 8rem minmax(0, 1fr);
     overflow: hidden;
     border: 1px solid var(--divider-color);
-    border-radius: 4px;
+    border-radius: 0;
     color: inherit;
     background: var(--preview-background);
     text-decoration: none;
@@ -103,6 +103,18 @@ const { href, label, title, description, site, image } = Astro.props;
   }
 
   @media (max-width: 28rem) {
+    .preview-card {
+      grid-template-columns: 1fr;
+    }
+
+    img {
+      height: 9rem;
+      object-fit: contain;
+      background: var(--preview-background);
+    }
+  }
+
+  @container (max-width: 24rem) {
     .preview-card {
       grid-template-columns: 1fr;
     }
