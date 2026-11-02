@@ -1,34 +1,30 @@
 ---
 import { work } from '../data/work';
 import TechStack from './TechStack.astro';
-import LinkPreview from './LinkPreview.astro';
+import { Image } from 'astro:assets';
 ---
 
 <div class="work-list">
   {work.map((item, index) => (
-    <article class="work-item" data-enter style={`--enter-delay: ${(index % 2) * 60}ms`}>
-      <div>
-        <p class="category">{item.category}</p>
-        <h3>
-          <a href={item.href}>
-            {item.logo ? (
-              <img class="project-logo" src={item.logo.src} width={item.logo.width} height={item.logo.height} alt={item.title} loading="lazy" />
-            ) : item.title}
-          </a>
-        </h3>
+    <article class:list={['work-item', `project-${index + 1}`]} data-enter style={`--enter-delay: ${(index % 2) * 60}ms`}>
+      <a class="project-visual" href={item.href} aria-label={`Explore ${item.title}`}>
+        <span class="visual-meta"><span>{item.category}</span><span aria-hidden="true">0{index + 1}</span></span>
+        {item.link?.preview ? (
+          <Image class="cover" src={item.link.preview.image} alt="" width={800} sizes="(min-width: 48rem) 48vw, 100vw" loading="lazy" />
+        ) : item.logo ? (
+          <div class="brand-stage"><div class="brand-sheet"><img src={item.logo.src} width={item.logo.width} height={item.logo.height} alt="" loading="lazy" /><span>Discover. Save. Wander.</span></div></div>
+        ) : (
+          <div class="document-stage" aria-hidden="true"><div class="document-back"></div><div class="document-front"><span class="document-label">KNOWLEDGE → ANSWERS</span><span class="document-title">A little clarity.<br />A lot less searching.</span><div class="document-footer"><span>Documents</span><span>Sources ↗</span></div></div></div>
+        )}
+        <span class="visual-arrow" aria-hidden="true">↗</span>
+      </a>
+      <div class="project-body">
+        <div class="title-row"><h3><a href={item.href}>{item.title}</a></h3><span class="project-type">{item.category}</span></div>
         {item.role && <p class="role">{item.role}</p>}
         {item.period && <p class="period">{item.period}</p>}
-      </div>
-      <div>
         <p class="description">{item.description}</p>
         <TechStack items={item.technologies} label={item.stackLabel} />
-        {item.link?.preview ? (
-          <LinkPreview href={item.link.href} label={item.link.label} {...item.link.preview} />
-        ) : item.link && (
-          <a class="detail-link" href={item.link.href}>
-            {item.link.label} <span aria-hidden="true">↗</span>
-          </a>
-        )}
+        {item.link && <a class="detail-link" href={item.link.href}>{item.link.label}<span aria-hidden="true">↗</span></a>}
       </div>
     </article>
   ))}
@@ -36,103 +32,70 @@ import LinkPreview from './LinkPreview.astro';
 
 <style>
   .work-list {
-    container-type: inline-size;
-  }
-
-  .work-item {
+    --card-surface: #252525;
+    --card-border: #414141;
+    --visual-surface: #202128;
+    --visual-accent: #bbc5f0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    gap: 2.5rem;
-    padding-block: 2.25rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 2rem;
+    padding-bottom: 4rem;
   }
-
-  .work-item:first-child {
-    padding-top: 0;
+  .work-item { min-width: 0; }
+  .work-item:nth-child(even) { margin-top: 5rem; }
+  .project-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1.65;
+    overflow: hidden;
+    isolation: isolate;
+    border: 1px solid var(--card-border);
+    border-radius: 0.75rem;
+    background: var(--visual-surface);
+    box-shadow: 0 12px 30px -18px #000;
+    transition: transform 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
   }
-
-  .work-item:last-child {
-    padding-bottom: 0;
+  .visual-meta { position: absolute; z-index: 2; inset: 1rem 1.25rem auto; display: flex; justify-content: space-between; gap: 1rem; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; }
+  .visual-meta > span { padding: 0.3rem 0.5rem; background: #171717cc; border-radius: 3px; }
+  .cover { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms ease; }
+  .visual-arrow { position: absolute; bottom: 1rem; right: 1rem; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 50%; background: #f4f4f4; color: #181818; font-size: 1.2rem; transition: transform 300ms ease; }
+  .project-body { padding: 1.5rem 0.25rem 0; }
+  .title-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 1rem; }
+  h3 { margin: 0; font-size: clamp(1.25rem, 2.2vw, 1.75rem); font-weight: 500; line-height: 1.25; letter-spacing: -0.035em; }
+  h3 a { text-decoration: none; }
+  .project-type { color: var(--text-muted); font-size: 0.7rem; }
+  .role, .period { margin: 0.75rem 0 0; color: var(--text-muted); font-size: 0.75rem; line-height: 1.6; }
+  .period { margin-top: 0.15rem; }
+  .description { margin: 1rem 0 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; max-width: 65ch; }
+  a { color: var(--link-color); text-underline-offset: 0.25em; }
+  a:hover { color: var(--link-hover); }
+  a:focus-visible { outline: 2px solid var(--focus-color); outline-offset: 5px; }
+  .detail-link { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--divider-color); font-size: 0.8rem; text-decoration: none; }
+  .detail-link span { font-size: 1.2rem; }
+  .project-3 .project-visual { background: #292e36; }
+  .document-stage { position: relative; width: 72%; transform: rotate(-5deg) translateY(1.25rem); }
+  .document-back { position: absolute; inset: -0.7rem 0.7rem 0.7rem -0.7rem; background: #788391; border-radius: 5px; transform: rotate(-5deg); }
+  .document-front { position: relative; display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem; background: #dce1e8; color: #252b34; border-radius: 5px; box-shadow: 0 15px 30px #0005; }
+  .document-label { font-size: 0.55rem; letter-spacing: 0.12em; }
+  .document-title { font-size: clamp(1.2rem, 2.4vw, 2rem); line-height: 1.15; letter-spacing: -0.04em; }
+  .document-footer { display: flex; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid #252b3433; font-size: 0.6rem; }
+  .project-4 .project-visual { background: #31372d; }
+  .brand-stage { width: 72%; transform: rotate(5deg) translateY(1rem); }
+  .brand-sheet { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; min-height: 10rem; padding: 2rem; background: #f0efe6; border-radius: 5px; box-shadow: -8px 8px 0 #aeb6a2, -16px 16px 0 #78816c, 0 24px 32px #0005; }
+  .brand-sheet img { width: 100%; max-width: 15rem; height: auto; }
+  .brand-sheet span { color: #4b5545; font-size: 0.65rem; letter-spacing: 0.03em; }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .project-visual:hover { transform: translateY(-5px); box-shadow: 0 22px 36px -18px #000; border-color: var(--visual-accent); }
+    .project-visual:hover .cover { transform: scale(1.035); }
+    .project-visual:hover .visual-arrow { transform: rotate(45deg); }
   }
-
-  .work-item + .work-item {
-    border-top: 1px solid var(--divider-subtle);
+  @media (max-width: 47.99rem) {
+    .work-list { grid-template-columns: 1fr; gap: 3rem; padding-bottom: 0; }
+    .work-item:nth-child(even) { margin-top: 0; }
+    .document-title { font-size: clamp(1.2rem, 5vw, 2rem); }
   }
-
-  .category {
-    margin: 0 0 0.5rem;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-  }
-
-  h3 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 600;
-    line-height: 1.4;
-  }
-
-  h3 a {
-    display: inline-block;
-    max-width: 100%;
-    text-decoration: none;
-  }
-
-  .project-logo {
-    display: block;
-    width: 10rem;
-    max-width: 100%;
-    height: auto;
-  }
-
-  h3 a:hover {
-    text-decoration: underline;
-  }
-
-  .role,
-  .period {
-    margin: 0.6rem 0 0;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-  }
-
-  .description {
-    max-width: 62ch;
-    margin: 0;
-    color: var(--text-secondary);
-    line-height: 1.75;
-  }
-
-  a {
-    color: var(--link-color);
-    text-underline-offset: 0.25em;
-  }
-
-  a:hover {
-    color: var(--link-hover);
-  }
-
-  a:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 5px;
-  }
-
-  .detail-link {
-    display: inline-block;
-    margin-top: 1.25rem;
-    font-size: 0.85rem;
-  }
-
-  @media (max-width: 45rem) {
-    .work-item {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-  }
-
-  @container (max-width: 40rem) {
-    .work-item {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-  }
+  @media (prefers-reduced-motion: reduce) { .project-visual, .cover, .visual-arrow { transition: none; } }
 </style>

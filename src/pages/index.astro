@@ -151,6 +151,31 @@ const artworks = [
   .dev-work {
     position: relative;
     isolation: isolate;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem;
+  }
+
+  .dev-work .section-heading {
+    position: static;
+    container-type: normal;
+  }
+
+  .dev-work h2 {
+    font-size: clamp(4.225rem, 14.3vw, 11.7rem);
+    margin-bottom: 2rem;
+  }
+
+  @media (min-width: 48rem) {
+    .dev-work .section-heading {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: baseline;
+      gap: 0 2rem;
+    }
+
+    .dev-work h2 { grid-column: 1 / -1; }
+    .dev-work .links { margin: 0; }
+    .dev-work .section-heading > p { margin: 0; }
   }
 
   .dev-work::before {
