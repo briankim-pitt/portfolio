@@ -1,0 +1,85 @@
+<div class="intro-guides" aria-hidden="true">
+  <div class="guide-columns" data-intro-guide="columns">
+    {Array.from({ length: 5 }, () => <span></span>)}
+  </div>
+  <div class="guide-rows" data-intro-guide="rows">
+    {[20, 43, 78].map((top) => <span class="baseline" style={`top: ${top}%`}></span>)}
+    <span class="registration left upper"></span>
+    <span class="registration right upper"></span>
+    <span class="registration left lower"></span>
+    <span class="registration right lower"></span>
+  </div>
+</div>
+
+<style>
+  .intro-guides {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    color: #dedede;
+    pointer-events: none;
+  }
+
+  .guide-columns {
+    position: absolute;
+    inset: -20% var(--page-gutter);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .guide-columns span {
+    width: 1px;
+    background: currentColor;
+  }
+
+  .guide-rows {
+    position: absolute;
+    inset: 0;
+  }
+
+  .baseline {
+    position: absolute;
+    inset-inline: -10%;
+    height: 1px;
+    background: currentColor;
+  }
+
+  .registration {
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    transform: translate(-50%, -50%);
+    color: #c9c9c9;
+  }
+
+  .registration::before,
+  .registration::after {
+    content: '';
+    position: absolute;
+    background: currentColor;
+  }
+
+  .registration::before {
+    inset: 6px 0;
+  }
+
+  .registration::after {
+    inset: 0 6px;
+  }
+
+  .left {
+    left: var(--page-gutter);
+  }
+
+  .right {
+    left: calc(100% - var(--page-gutter));
+  }
+
+  .upper {
+    top: 43%;
+  }
+
+  .lower {
+    top: 78%;
+  }
+</style>

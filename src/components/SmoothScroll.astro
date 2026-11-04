@@ -15,7 +15,7 @@ import 'lenis/dist/lenis.css';
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
       const previousRestoration = window.history.scrollRestoration;
-      const startAtTop = navigation?.type !== 'back_forward' && !window.location.hash;
+      const startAtTop = navigation?.type === 'reload' || (navigation?.type !== 'back_forward' && !window.location.hash);
       if (startAtTop) window.history.scrollRestoration = 'manual';
 
       const start = () => {
@@ -66,7 +66,8 @@ import 'lenis/dist/lenis.css';
 
       const hidePage = () => {
         stop();
-        window.history.scrollRestoration = previousRestoration;
+        // Let the browser restore this entry when returning with Back/Forward.
+        window.history.scrollRestoration = startAtTop ? 'auto' : previousRestoration;
       };
 
       reducedMotion.addEventListener('change', updatePreference);

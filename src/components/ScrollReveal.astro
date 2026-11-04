@@ -12,18 +12,15 @@
       const observer = new IntersectionObserver((entries) => {
         for (const entry of entries) {
           const element = entry.target as HTMLElement;
-          // Reveal after most of the element is visible. Oversized elements
-          // use the viewport height so they can still reach the trigger.
+          // Reveal near the bottom edge, once a small part is visible.
+          // Cap the trigger height for elements taller than the viewport.
           const viewportHeight = entry.rootBounds?.height ?? window.innerHeight;
-          const requiredHeight = Math.min(entry.boundingClientRect.height, viewportHeight) * 0.7;
+          const requiredHeight = Math.min(entry.boundingClientRect.height, viewportHeight) * 0.15;
           if (
             entry.isIntersecting &&
             entry.intersectionRect.height >= requiredHeight &&
             element.dataset.reveal === 'pending'
           ) {
-            const viewportBottom = entry.rootBounds?.bottom ?? window.innerHeight;
-            const distance = Math.max(24, viewportBottom - entry.boundingClientRect.top + 12);
-            element.style.setProperty('--enter-distance', `${distance}px`);
             element.dataset.reveal = 'visible';
           }
         }
@@ -81,7 +78,6 @@
         reducedMotion.removeEventListener('change', updatePreference);
         for (const element of elements) {
           delete element.dataset.reveal;
-          element.style.removeProperty('--enter-distance');
         }
       };
     }

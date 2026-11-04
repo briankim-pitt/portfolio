@@ -2,7 +2,8 @@ import type { ImageMetadata } from 'astro';
 import sudoL7Preview from '../assets/link-previews/sudo-l7.webp';
 import tempoPreview from '../assets/link-previews/tempo.jpg';
 import tempoLogo from '../assets/project-logos/tempo.png';
-import wanderCartLogo from '../assets/project-logos/wandercart.svg?url';
+import ragPreview from '../assets/videos/RAG_preview.mp4?url';
+import tempoPreviewVideo from '../assets/videos/tempo_preview.mp4?url';
 
 export type Technology =
   | 'swiftui'
@@ -25,6 +26,8 @@ export type Technology =
 interface WorkItem {
   title: string;
   logo?: { src: string; width: number; height: number };
+  brand?: 'wandercart';
+  previewVideo?: string;
   category: string;
   href: string;
   role?: string;
@@ -68,6 +71,7 @@ export const work: WorkItem[] = [
   },
   {
     title: 'Tempo',
+    previewVideo: tempoPreviewVideo,
     logo: { src: tempoLogo.src, width: tempoLogo.width, height: tempoLogo.height },
     category: 'iOS app',
     href: 'https://www.ourtempo.app',
@@ -87,6 +91,7 @@ export const work: WorkItem[] = [
   },
   {
     title: 'AI Operations Assistant',
+    previewVideo: ragPreview,
     category: 'Web app · RAG',
     href: 'https://github.com/briankim-pitt/AI-operations-assistant',
     description:
@@ -99,7 +104,7 @@ export const work: WorkItem[] = [
   },
   {
     title: 'WanderCart',
-    logo: { src: wanderCartLogo, width: 212, height: 42 },
+    brand: 'wandercart',
     category: 'iOS app',
     href: 'https://github.com/briankim-pitt/ShoppingApp',
     description:

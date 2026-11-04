@@ -1,0 +1,29 @@
+---
+import { getImage } from 'astro:assets';
+import brandGuide from '../assets/project-logos/wandercart-brand-guide.png';
+
+interface Props {
+  variant: 'logo' | 'icon';
+  class?: string;
+}
+
+const { variant, class: className, ...attributes } = Astro.props;
+const source = await getImage({ src: brandGuide, format: 'webp', quality: 95 });
+// Display the supplied artwork through a viewport, preserving the original pixels.
+const viewport = variant === 'logo'
+  ? { x: 58, y: 39, width: 477, height: 102 }
+  : { x: 824, y: 83, width: 131, height: 134 };
+---
+
+<svg
+  {...attributes}
+  class={className}
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox={`${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`}
+  width={viewport.width}
+  height={viewport.height}
+  role="img"
+  aria-label={variant === 'logo' ? 'WanderCart' : 'WanderCart app icon'}
+>
+  <image href={source.src} width={brandGuide.width} height={brandGuide.height} />
+</svg>

@@ -8,8 +8,8 @@
       const stack = this.closest('main');
       const intro = stack?.querySelector<HTMLElement>('[data-base-layer]');
       const dev = stack?.querySelector<HTMLElement>('.dev-work');
-      const artwork = stack?.querySelector<HTMLElement>('.artwork-folio');
-      if (!stack || !intro || !dev || !artwork || !('ResizeObserver' in window)) return;
+      const contact = stack?.querySelector<HTMLElement>('.contact-folio');
+      if (!stack || !intro || !dev || !contact || !('ResizeObserver' in window)) return;
 
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       let frame = 0;
@@ -36,13 +36,13 @@
         });
       };
 
-      // Reserve the artwork's full reading distance while its folder waits
+      // Reserve the contact layer's full reading distance while its folder waits
       // at the bottom of the viewport. The containing block releases it only
       // after the Dev Work content has passed.
       const measure = () => {
         stack.style.setProperty('--intro-height', `${intro.offsetHeight}px`);
         stack.style.setProperty('--dev-height', `${dev.offsetHeight}px`);
-        stack.style.setProperty('--artwork-height', `${artwork.offsetHeight}px`);
+        stack.style.setProperty('--contact-height', `${contact.offsetHeight}px`);
         stack.setAttribute('data-stack-ready', '');
 
         const stackTop = stack.getBoundingClientRect().top + window.scrollY;
@@ -56,7 +56,7 @@
       const observer = new ResizeObserver(measure);
       observer.observe(intro);
       observer.observe(dev);
-      observer.observe(artwork);
+      observer.observe(contact);
       measure();
 
       window.addEventListener('scroll', schedule, { passive: true });
@@ -72,7 +72,7 @@
         stack.removeAttribute('data-stack-ready');
         stack.style.removeProperty('--intro-height');
         stack.style.removeProperty('--dev-height');
-        stack.style.removeProperty('--artwork-height');
+        stack.style.removeProperty('--contact-height');
         dev.style.removeProperty('--dev-stop-offset');
       };
     }

@@ -44,7 +44,8 @@ Technology logos come from Simple Icons and are rendered as local inline SVGs.
 
 Project logos are stored in `src/assets/project-logos/`. Tempo's wordmark is
 copied from `/Users/brian/project/landing-page/public/TEMPO.png`. WanderCart's
-SVG reproduces the mark geometry and wordmark arrangement from
-`Shopping/Shopping/Core/Design/WanderCartLogoMark.swift` and
-`AppPageTitleModifier.swift` in the local ShoppingApp checkout, including its
-`#7b4dff` brand color.
+current logo and purple app icon use the user's supplied design sheet,
+`54A74D3F-4620-40A0-8B3D-E96733E5E25D.PNG`, preserved locally as
+`wandercart-brand-guide.png`. `WanderCartAsset.astro` displays the original
+artwork through SVG viewports, without redrawing the mark or substituting fonts.
+The older `wandercart.svg` remains as an unused legacy asset.

@@ -1,37 +1,86 @@
 ---
+import { Image } from 'astro:assets';
 import { work } from '../data/work';
 import TechStack from './TechStack.astro';
-import LinkPreview from './LinkPreview.astro';
+import WanderCartAsset from './WanderCartAsset.astro';
+
+const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600, Math.min(sourceWidth, 1600)])]
+  .filter((width) => width <= sourceWidth)
+  .sort((a, b) => a - b);
 ---
 
 <magnetic-cards class="work-grid">
   {work.map((item, index) => (
-    <div class="card-slot" data-enter style={`--enter-delay: ${(index % 2) * 60}ms`}>
+    <div class="card-slot" data-enter>
       <article class="work-card">
-        <div class="card-content">
-          <div>
-            <p class="category">{item.category}</p>
+        <a class="project-visual" href={item.href} aria-label={`Explore ${item.title}`}>
+          <div class="card-content">
+            {item.previewVideo ? (
+              <video
+                class="cover video-preview"
+                src={item.previewVideo}
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                aria-hidden="true"
+              />
+            ) : item.link?.preview ? (
+              <Image
+                class="cover"
+                src={item.link.preview.image}
+                alt=""
+                width={Math.min(1200, item.link.preview.image.width)}
+                widths={previewWidths(item.link.preview.image.width)}
+                sizes="(min-width: 56rem) 52vw, 100vw"
+                loading="lazy"
+              />
+            ) : item.brand === 'wandercart' ? (
+              <div class="wandercart-stage" aria-hidden="true">
+                <WanderCartAsset variant="icon" class="wandercart-icon" />
+              </div>
+            ) : item.logo ? (
+              <div class="brand-stage" aria-hidden="true">
+                <div class="brand-sheet">
+                  <img src={item.logo.src} width={item.logo.width} height={item.logo.height} alt="" loading="lazy" />
+                  <span>{item.category}</span>
+                </div>
+              </div>
+            ) : (
+              <div class="document-stage" aria-hidden="true">
+                <div class="document-back"></div>
+                <div class="document-front">
+                  <span class="document-label">Knowledge → Answers</span>
+                  <span class="document-title">{item.title}</span>
+                  <div class="document-footer"><span>Google Drive</span><span>Sources ↗</span></div>
+                </div>
+              </div>
+            )}
+          </div>
+          <span class="visual-arrow" aria-hidden="true">↗</span>
+        </a>
+        <div class="project-body">
+          <p class="project-index">{String(index + 1).padStart(3, '0')} / {item.category}</p>
+          <div class="title-row">
             <h3>
               <a href={item.href}>
-                {item.logo ? (
+                {item.brand === 'wandercart' ? (
+                  <span class="wandercart-wordmark"><WanderCartAsset variant="logo" class="project-logo" /></span>
+                ) : item.logo ? (
                   <img class="project-logo" src={item.logo.src} width={item.logo.width} height={item.logo.height} alt={item.title} loading="lazy" />
                 ) : item.title}
               </a>
             </h3>
-            {item.role && <p class="role">{item.role}</p>}
-            {item.period && <p class="period">{item.period}</p>}
           </div>
-          <div>
-            <p class="description">{item.description}</p>
-            <TechStack items={item.technologies} label={item.stackLabel} />
-            {item.link?.preview ? (
-              <LinkPreview href={item.link.href} label={item.link.label} {...item.link.preview} />
-            ) : item.link && (
-              <a class="detail-link" href={item.link.href}>
-                {item.link.label} <span aria-hidden="true">↗</span>
-              </a>
-            )}
-          </div>
+          {item.role && <p class="role">{item.role}</p>}
+          {item.period && <p class="period">{item.period}</p>}
+          <p class="description">{item.description}</p>
+          <TechStack items={item.technologies} label={item.stackLabel} />
+          {item.link && (
+            <a class="detail-link" href={item.link.href}>
+              {item.link.label}<span aria-hidden="true">↗</span>
+            </a>
+          )}
         </div>
       </article>
     </div>
@@ -47,10 +96,50 @@ import LinkPreview from './LinkPreview.astro';
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       const cleanups = [...this.querySelectorAll<HTMLElement>('.card-slot')].map((slot) => {
         const card = slot.querySelector<HTMLElement>('.work-card');
-        if (!card) return () => {};
+        const visual = slot.querySelector<HTMLElement>('.project-visual');
+        if (!card || !visual) return () => {};
         let frame = 0;
         let pointerX = 0;
         let pointerY = 0;
+        const video = slot.querySelector<HTMLVideoElement>('video');
+        let videoInView = false;
+        let videoHovered = false;
+
+        const updatePlayback = () => {
+          if (!video) return;
+          if (videoHovered && videoInView && finePointer.matches && !document.hidden && !reducedMotion.matches) {
+            void video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        };
+
+        const videoObserver = video ? new IntersectionObserver(([entry]) => {
+          videoInView = entry.isIntersecting;
+          if (!videoInView) videoHovered = false;
+          updatePlayback();
+        }, { threshold: 0 }) : undefined;
+
+        const playOnHover = (event: PointerEvent) => {
+          videoHovered = event.pointerType === 'mouse';
+          updatePlayback();
+        };
+
+        const stopHover = () => {
+          videoHovered = false;
+          updatePlayback();
+        };
+
+        if (video) {
+          videoObserver?.observe(video);
+          visual.addEventListener('pointerenter', playOnHover);
+          visual.addEventListener('pointerleave', stopHover);
+          visual.addEventListener('pointercancel', stopHover);
+          window.addEventListener('blur', stopHover);
+          document.addEventListener('visibilitychange', updatePlayback);
+          finePointer.addEventListener('change', stopHover);
+          reducedMotion.addEventListener('change', updatePlayback);
+        }
 
         const reset = () => {
           cancelAnimationFrame(frame);
@@ -62,7 +151,7 @@ import LinkPreview from './LinkPreview.astro';
         const render = () => {
           frame = 0;
           // The frame stays fixed; only its inset content follows the pointer.
-          const bounds = slot.getBoundingClientRect();
+          const bounds = visual.getBoundingClientRect();
           const x = Math.max(-1, Math.min(1, (pointerX - bounds.left) / bounds.width * 2 - 1));
           const y = Math.max(-1, Math.min(1, (pointerY - bounds.top) / bounds.height * 2 - 1));
           card.style.setProperty('--magnet-x', `${x * 10}px`);
@@ -76,10 +165,10 @@ import LinkPreview from './LinkPreview.astro';
           if (!frame) frame = requestAnimationFrame(render);
         };
 
-        slot.addEventListener('pointermove', move, { passive: true });
-        slot.addEventListener('pointerleave', reset);
-        slot.addEventListener('pointercancel', reset);
-        slot.addEventListener('focusin', reset);
+        visual.addEventListener('pointermove', move, { passive: true });
+        visual.addEventListener('pointerleave', reset);
+        visual.addEventListener('pointercancel', reset);
+        visual.addEventListener('focusin', reset);
         window.addEventListener('blur', reset);
         window.addEventListener('scroll', reset, { passive: true });
         finePointer.addEventListener('change', reset);
@@ -87,10 +176,19 @@ import LinkPreview from './LinkPreview.astro';
 
         return () => {
           reset();
-          slot.removeEventListener('pointermove', move);
-          slot.removeEventListener('pointerleave', reset);
-          slot.removeEventListener('pointercancel', reset);
-          slot.removeEventListener('focusin', reset);
+          videoObserver?.disconnect();
+          video?.pause();
+          visual.removeEventListener('pointerenter', playOnHover);
+          visual.removeEventListener('pointerleave', stopHover);
+          visual.removeEventListener('pointercancel', stopHover);
+          window.removeEventListener('blur', stopHover);
+          document.removeEventListener('visibilitychange', updatePlayback);
+          finePointer.removeEventListener('change', stopHover);
+          reducedMotion.removeEventListener('change', updatePlayback);
+          visual.removeEventListener('pointermove', move);
+          visual.removeEventListener('pointerleave', reset);
+          visual.removeEventListener('pointercancel', reset);
+          visual.removeEventListener('focusin', reset);
           window.removeEventListener('blur', reset);
           window.removeEventListener('scroll', reset);
           finePointer.removeEventListener('change', reset);
@@ -113,63 +211,128 @@ import LinkPreview from './LinkPreview.astro';
 <style>
   .work-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-    gap: 1.5rem;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(4rem, 10vw, 10rem);
   }
 
-  .card-slot {
+  .card-slot,
+  .work-card {
     min-width: 0;
   }
 
   .work-card {
-    container-type: inline-size;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: clamp(2rem, 5vw, 6rem);
+  }
+
+  .project-body {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .project-visual {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .card-slot:nth-child(even) .work-card {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+
+  .card-slot:nth-child(even) .project-visual {
+    grid-column: 1;
+  }
+
+  .card-slot:nth-child(even) .project-body {
+    grid-column: 2;
+  }
+
+  .project-visual {
+    position: relative;
+    display: block;
+    aspect-ratio: 1.1;
     overflow: hidden;
-    min-width: 0;
-    height: 100%;
-    padding: clamp(1.25rem, 2vw, 2rem);
+    isolation: isolate;
     border: 1px solid var(--divider-subtle);
     border-radius: 0;
-    background: #1b1b1b;
-    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+    background: #202128;
+    box-shadow: 0 12px 30px -18px #000;
     transition: border-color 250ms ease, box-shadow 350ms ease;
   }
 
   .card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1.75rem;
-    min-width: 0;
+    position: absolute;
+    inset: -12px;
+    display: grid;
+    place-items: center;
+    filter: grayscale(1);
+    transition: filter 600ms ease;
+  }
+
+  .project-visual:is(:hover, :focus-visible) .card-content {
+    filter: grayscale(0);
+  }
+
+  .cover {
+    display: block;
+    width: 100%;
     height: 100%;
+    min-height: 0;
+    object-fit: cover;
   }
 
-  .work-card:focus-within {
-    border-color: var(--focus-color);
+  .video-preview {
+    object-fit: contain;
+    padding: 24px;
+    background: #101114;
   }
 
-  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-    .card-content {
-      transform: translate3d(var(--magnet-x, 0px), var(--magnet-y, 0px), 0);
-      transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    .card-slot:hover .work-card {
-      border-color: #666;
-      box-shadow: 0 18px 40px rgb(0 0 0 / 24%);
-    }
+  .visual-arrow {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: #171717cc;
+    color: #fff;
+    font-size: 1.2rem;
+    pointer-events: none;
   }
 
-  .category {
-    margin: 0 0 0.5rem;
-    color: var(--text-muted);
-    font-size: 0.75rem;
+  .project-body {
+    min-width: 0;
+    padding: clamp(0rem, 1vw, 1rem);
+  }
+
+  .project-index {
+    margin: 0 0 clamp(1.25rem, 3vw, 2.5rem);
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
   }
 
   h3 {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: clamp(2.25rem, 4.7vw, 5rem);
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
   }
 
   h3 a {
@@ -180,27 +343,57 @@ import LinkPreview from './LinkPreview.astro';
 
   .project-logo {
     display: block;
-    width: 10rem;
+    width: clamp(12rem, 24vw, 25rem);
     max-width: 100%;
     height: auto;
+    filter: grayscale(1);
+    transition: filter 600ms ease;
   }
 
-  h3 a:hover {
-    text-decoration: underline;
+  h3 a:is(:hover, :focus-visible) .project-logo {
+    filter: grayscale(0);
+  }
+
+  .wandercart-wordmark {
+    display: block;
+    padding: 0.5rem;
+    background: #fff;
+  }
+
+  .wandercart-stage {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, #fff 0%, #f3f0ff 65%, #e7dfff 100%);
+  }
+
+  .wandercart-icon {
+    display: block;
+    width: clamp(9rem, 19vw, 20rem);
+    max-width: 60%;
+    height: auto;
+    border-radius: 27%;
   }
 
   .role,
   .period {
-    margin: 0.6rem 0 0;
+    margin: 0.75rem 0 0;
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .period {
+    margin-top: 0.15rem;
   }
 
   .description {
-    max-width: 62ch;
-    margin: 0;
+    max-width: 48ch;
+    margin: 1.5rem 0 0;
     color: var(--text-secondary);
-    line-height: 1.75;
+    font-size: clamp(1rem, 1.35vw, 1.2rem);
+    line-height: 1.65;
   }
 
   a {
@@ -213,14 +406,165 @@ import LinkPreview from './LinkPreview.astro';
   }
 
   a:focus-visible {
-    outline: 2px solid currentColor;
+    outline: 2px solid var(--focus-color);
     outline-offset: 5px;
   }
 
   .detail-link {
-    display: inline-block;
-    margin-top: 1.25rem;
-    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--divider-color);
+    font-size: 0.8rem;
+    text-decoration: none;
   }
 
+  .detail-link span {
+    font-size: 1.2rem;
+  }
+
+  .document-stage {
+    position: relative;
+    width: 72%;
+    max-width: 30rem;
+    transform: rotate(-5deg) translateY(1.25rem);
+  }
+
+  .document-back {
+    position: absolute;
+    inset: -0.7rem 0.7rem 0.7rem -0.7rem;
+    background: #788391;
+    transform: rotate(-5deg);
+  }
+
+  .document-front {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: clamp(1rem, 3vw, 2rem);
+    background: #dce1e8;
+    color: #252b34;
+    box-shadow: 0 15px 30px #0005;
+  }
+
+  .document-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .document-title {
+    max-width: 14ch;
+    font-size: clamp(1.2rem, 2.4vw, 2rem);
+    line-height: 1.15;
+    letter-spacing: -0.04em;
+  }
+
+  .document-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #252b3433;
+    font-size: 0.6rem;
+  }
+
+  .brand-stage {
+    width: 72%;
+    max-width: 30rem;
+    transform: rotate(5deg) translateY(1rem);
+  }
+
+  .brand-sheet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    min-height: 10rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background: #242128;
+    box-shadow: -8px 8px 0 #51495f, -16px 16px 0 #36313f, 0 24px 32px #0005;
+  }
+
+  .brand-sheet img {
+    width: 100%;
+    max-width: 15rem;
+    height: auto;
+  }
+
+  .brand-sheet > span {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    letter-spacing: 0.03em;
+  }
+
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .card-content {
+      transform: translate3d(var(--magnet-x, 0px), var(--magnet-y, 0px), 0);
+      transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1), filter 600ms ease;
+    }
+
+    .project-visual:hover {
+      border-color: var(--focus-color);
+      box-shadow: 0 22px 36px -18px #000;
+    }
+  }
+
+  @media (max-width: 55.99rem) {
+    .work-grid {
+      gap: 4.5rem;
+    }
+
+    .work-card,
+    .card-slot:nth-child(even) .work-card {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.75rem;
+    }
+
+    .project-visual,
+    .card-slot:nth-child(even) .project-visual {
+      grid-column: 1;
+      grid-row: 1;
+      aspect-ratio: 1.3;
+    }
+
+    .project-body,
+    .card-slot:nth-child(even) .project-body {
+      grid-column: 1;
+      grid-row: 2;
+      padding: 0;
+    }
+
+    .project-logo {
+      width: clamp(12rem, 45vw, 20rem);
+    }
+
+    .wandercart-icon {
+      width: 42%;
+    }
+
+    .document-title {
+      font-size: clamp(1.2rem, 5vw, 2rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .project-visual,
+    .card-content,
+    .project-logo {
+      transition: none;
+    }
+  }
+
+  @media (hover: none) {
+    .card-content,
+    .project-logo {
+      filter: none;
+    }
+  }
 </style>

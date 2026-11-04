@@ -1,0 +1,135 @@
+<intro-title aria-label="Fullstack Dev">
+  <span class="fullstack" aria-hidden="true">FULLSTACK</span>
+  <span class="dev" aria-hidden="true">DEV</span>
+</intro-title>
+
+<style>
+  intro-title {
+    position: absolute;
+    z-index: 1;
+    inset: clamp(8rem, 20svh, 12rem) var(--page-gutter) clamp(10rem, 22svh, 14rem);
+    display: block;
+    pointer-events: none;
+    color: #000;
+    font-weight: 600;
+    line-height: 0.85;
+    letter-spacing: -0.07em;
+  }
+
+  span {
+    position: absolute;
+    display: block;
+    white-space: nowrap;
+  }
+
+  .fullstack {
+    top: 0;
+    left: 0;
+    font-size: 15.6vw;
+    transform-origin: left top;
+  }
+
+  .dev {
+    right: 0;
+    bottom: 0;
+    font-size: clamp(7rem, 25vw, 28rem);
+    color: transparent;
+    -webkit-text-stroke: clamp(1px, 0.14vw, 2.5px) #000;
+    transform-origin: right bottom;
+  }
+
+  @media (max-width: 36rem) {
+    intro-title {
+      inset-block: 25svh 32svh;
+    }
+
+    .dev {
+      font-size: 32vw;
+    }
+  }
+</style>
+
+<script>
+  class IntroTitle extends HTMLElement {
+    private cleanup?: () => void;
+
+    connectedCallback() {
+      const intro = this.closest<HTMLElement>('[data-base-layer]');
+      const stack = intro?.parentElement;
+      const fullstack = this.querySelector<HTMLElement>('.fullstack');
+      const dev = this.querySelector<HTMLElement>('.dev');
+      if (!intro || !stack || !fullstack || !dev) return;
+      const columns = intro.querySelector<HTMLElement>('[data-intro-guide="columns"]');
+      const rows = intro.querySelector<HTMLElement>('[data-intro-guide="rows"]');
+
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let frame = 0;
+      let start = 0;
+      let distance = 1;
+      let width = window.innerWidth;
+      let height = intro.offsetHeight;
+
+      const render = () => {
+        const progress = reducedMotion.matches
+          ? 0
+          : Math.min(1, Math.max(0, (window.scrollY - start) / distance));
+
+        // Slide horizontally in opposite directions as each word grows.
+        fullstack.style.transform = `translate3d(${-width * 0.2 * progress}px, 0, 0) scale(${1 + 0.22 * progress})`;
+        dev.style.transform = `translate3d(${width * 0.24 * progress}px, 0, 0) scale(${1 + 0.36 * progress})`;
+
+        // Let the drafting guides drift gently behind the typography.
+        if (columns) {
+          columns.style.transform = `translate3d(${-width * 0.025 * progress}px, 0, 0)`;
+        }
+        if (rows) {
+          rows.style.transform = `translate3d(${-width * 0.025 * progress}px, ${-height * 0.06 * progress}px, 0)`;
+        }
+      };
+
+      const schedule = () => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          render();
+        });
+      };
+
+      const measure = () => {
+        // Measure the stationary container, rather than the sticky intro.
+        start = stack.getBoundingClientRect().top + window.scrollY;
+        width = window.innerWidth;
+        height = intro.offsetHeight;
+        distance = Math.max(1, height * 0.85);
+        render();
+      };
+
+      const observer = new ResizeObserver(measure);
+      observer.observe(intro);
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('resize', measure);
+      reducedMotion.addEventListener('change', schedule);
+      measure();
+
+      this.cleanup = () => {
+        cancelAnimationFrame(frame);
+        observer.disconnect();
+        window.removeEventListener('scroll', schedule);
+        window.removeEventListener('resize', measure);
+        reducedMotion.removeEventListener('change', schedule);
+        fullstack.style.removeProperty('transform');
+        dev.style.removeProperty('transform');
+        columns?.style.removeProperty('transform');
+        rows?.style.removeProperty('transform');
+      };
+    }
+
+    disconnectedCallback() {
+      this.cleanup?.();
+    }
+  }
+
+  if (!customElements.get('intro-title')) {
+    customElements.define('intro-title', IntroTitle);
+  }
+</script>

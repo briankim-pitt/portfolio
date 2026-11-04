@@ -20,6 +20,21 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      {
+        // Set this before the browser lays out the sticky layers or restores scroll.
+        const navigation = performance.getEntriesByType('navigation')[0];
+        const reloading = navigation?.type === 'reload';
+        const startAtTop = reloading || (navigation?.type !== 'back_forward' && !window.location.hash);
+        if (startAtTop) {
+          window.history.scrollRestoration = 'manual';
+          if (reloading && window.location.hash) {
+            window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+          }
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        }
+      }
+    </script>
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
@@ -71,7 +86,7 @@ const {
   @keyframes enter-view {
     from {
       opacity: 0;
-      transform: translate3d(0, var(--enter-distance, 24px), 0);
+      transform: translate3d(0, 8px, 0);
     }
 
     to {
@@ -86,7 +101,7 @@ const {
     }
 
     [data-enter][data-reveal='visible'] {
-      animation: enter-view 600ms cubic-bezier(0.22, 1, 0.36, 1) var(--enter-delay, 0ms) backwards;
+      animation: enter-view 1000ms cubic-bezier(0.3, 0, 0.3, 1) var(--enter-delay, 0ms) backwards;
     }
   }
 

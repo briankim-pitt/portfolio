@@ -6,6 +6,7 @@
 
     connectedCallback() {
       const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+      const invertedLayers = [...document.querySelectorAll<HTMLElement>('[data-cursor-invert]')];
       const clickable = 'a[href], button:enabled, summary, [role="button"]:not([aria-disabled="true"]), input:enabled, select:enabled, label[for]';
       let x = 0;
       let y = 0;
@@ -16,6 +17,10 @@
         frame = 0;
         this.style.transform = `translate3d(${x}px, ${y}px, 0)`;
         this.toggleAttribute('data-hover', Boolean(document.elementFromPoint(x, y)?.closest(clickable)));
+        this.toggleAttribute('data-invert', invertedLayers.some((layer) => {
+          const bounds = layer.getBoundingClientRect();
+          return x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
+        }));
         this.setAttribute('data-visible', '');
         document.documentElement.classList.add('has-circle-cursor');
       };
@@ -30,6 +35,7 @@
         frame = 0;
         this.removeAttribute('data-visible');
         this.removeAttribute('data-hover');
+        this.removeAttribute('data-invert');
         document.documentElement.classList.remove('has-circle-cursor');
       };
 
@@ -114,6 +120,14 @@
       transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1),
       background-color 180ms ease,
       opacity 180ms ease;
+  }
+
+  circle-cursor[data-invert] {
+    mix-blend-mode: difference;
+  }
+
+  circle-cursor[data-invert] span {
+    background-color: #fff;
   }
 
   circle-cursor[data-hover] span {
