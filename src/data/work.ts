@@ -2,6 +2,7 @@ import type { ImageMetadata } from 'astro';
 import sudoL7Preview from '../assets/link-previews/sudo-l7.webp';
 import tempoPreview from '../assets/link-previews/tempo.jpg';
 import tempoLogo from '../assets/project-logos/tempo.png';
+import surgeLogo from '../assets/project-logos/surge-ai.svg?url';
 import ragPreview from '../assets/videos/RAG_preview.mp4?url';
 import tempoPreviewVideo from '../assets/videos/tempo_preview.mp4?url';
 
@@ -27,7 +28,7 @@ interface WorkItem {
   title: string;
   logo?: { src: string; width: number; height: number };
   brand?: 'wandercart';
-  previewVideo?: string;
+  previewVideo?: { src: string; width: number; height: number };
   category: string;
   href: string;
   role?: string;
@@ -50,6 +51,7 @@ interface WorkItem {
 export const work: WorkItem[] = [
   {
     title: 'Surge AI',
+    logo: { src: surgeLogo, width: 96, height: 30 },
     category: 'Work',
     href: 'https://surgehq.ai/blog/sudo-l7',
     role: 'Agent Coding Benchmark Author · Contract',
@@ -71,7 +73,7 @@ export const work: WorkItem[] = [
   },
   {
     title: 'Tempo',
-    previewVideo: tempoPreviewVideo,
+    previewVideo: { src: tempoPreviewVideo, width: 2010, height: 1080 },
     logo: { src: tempoLogo.src, width: tempoLogo.width, height: tempoLogo.height },
     category: 'iOS app',
     href: 'https://www.ourtempo.app',
@@ -91,7 +93,7 @@ export const work: WorkItem[] = [
   },
   {
     title: 'AI Operations Assistant',
-    previewVideo: ragPreview,
+    previewVideo: { src: ragPreview, width: 1234, height: 720 },
     category: 'Web app · RAG',
     href: 'https://github.com/briankim-pitt/AI-operations-assistant',
     description:
@@ -105,7 +107,7 @@ export const work: WorkItem[] = [
   {
     title: 'WanderCart',
     brand: 'wandercart',
-    category: 'iOS app',
+    category: 'WIP iOS app',
     href: 'https://github.com/briankim-pitt/ShoppingApp',
     description:
       'A shopping simulator for saving real products and checking out with virtual WanderCoins. Includes wishlists, product imports, and simulated delivery tracking, backed by a transactional wallet and order system.',

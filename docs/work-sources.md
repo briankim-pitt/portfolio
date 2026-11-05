@@ -42,10 +42,15 @@ they do not imply a particular project status, team size, or performance result.
 
 Technology logos come from Simple Icons and are rendered as local inline SVGs.
 
-Project logos are stored in `src/assets/project-logos/`. Tempo's wordmark is
+Project logos are stored in `src/assets/project-logos/`. Surge AI's light wordmark
+is the official SVG linked by [its website](https://surgehq.ai/), saved from
+`https://cdn.prod.website-files.com/68dc970bd6e945ea3fb0f426/68edc094dab2221243f61246_Logo-dm.svg`
+as `surge-ai.svg` without altering its paths or colors. Tempo's wordmark is
 copied from `/Users/brian/project/landing-page/public/TEMPO.png`. WanderCart's
-current logo and purple app icon use the user's supplied design sheet,
+purple app icon uses the user's supplied design sheet,
 `54A74D3F-4620-40A0-8B3D-E96733E5E25D.PNG`, preserved locally as
 `wandercart-brand-guide.png`. `WanderCartAsset.astro` displays the original
-artwork through SVG viewports, without redrawing the mark or substituting fonts.
+artwork through an SVG viewport, without redrawing the mark. At the user's
+request, the portfolio heading displays WanderCart as plain text instead of the
+design sheet's boxed wordmark, and the app is labeled WIP.
 The older `wandercart.svg` remains as an unused legacy asset.

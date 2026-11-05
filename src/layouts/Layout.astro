@@ -36,6 +36,7 @@ const {
       }
     </script>
     <meta name="description" content={description} />
+    <link rel="preload" href="/fonts/space-grotesk/variable.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
@@ -50,6 +51,14 @@ const {
 </html>
 
 <style is:global>
+  @font-face {
+    font-family: 'Space Grotesk';
+    src: url('/fonts/space-grotesk/variable.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+  }
+
   :root {
     --page-background: #f7f7f7;
     --panel-background: #0f0f0f;
@@ -64,10 +73,12 @@ const {
     --link-hover: var(--accent-hover);
     --focus-color: var(--accent-color);
     --preview-background: #fafafa;
+    --font-ui: 'Space Grotesk', system-ui, sans-serif;
     font-family: system-ui, sans-serif;
     color: var(--text-primary);
     background: var(--page-background);
     line-height: 1.6;
+    overflow-x: clip;
   }
 
   * {

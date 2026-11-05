@@ -13,12 +13,14 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
   {work.map((item, index) => (
     <div class="card-slot" data-enter>
       <article class="work-card">
-        <a class="project-visual" href={item.href} aria-label={`Explore ${item.title}`}>
+        <a class:list={['project-visual', { 'sudo-preview': item.title === 'Surge AI' }]} href={item.href} target="_blank" rel="noopener noreferrer" aria-label={item.title === 'Surge AI' ? 'View sudo L7 blog post' : `Explore ${item.title}`}>
           <div class="card-content">
             {item.previewVideo ? (
               <video
                 class="cover video-preview"
-                src={item.previewVideo}
+                src={item.previewVideo.src}
+                width={item.previewVideo.width}
+                height={item.previewVideo.height}
                 muted
                 loop
                 playsinline
@@ -38,6 +40,7 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
             ) : item.brand === 'wandercart' ? (
               <div class="wandercart-stage" aria-hidden="true">
                 <WanderCartAsset variant="icon" class="wandercart-icon" />
+                <span class="wip-note">work in progress</span>
               </div>
             ) : item.logo ? (
               <div class="brand-stage" aria-hidden="true">
@@ -56,16 +59,18 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
                 </div>
               </div>
             )}
+            {item.title === 'Surge AI' && (
+              <span class="preview-note" aria-hidden="true">View blog post <span>↗</span></span>
+            )}
           </div>
-          <span class="visual-arrow" aria-hidden="true">↗</span>
         </a>
         <div class="project-body">
           <p class="project-index">{String(index + 1).padStart(3, '0')} / {item.category}</p>
           <div class="title-row">
             <h3>
-              <a href={item.href}>
+              <a href={item.href} target="_blank" rel="noopener noreferrer">
                 {item.brand === 'wandercart' ? (
-                  <span class="wandercart-wordmark"><WanderCartAsset variant="logo" class="project-logo" /></span>
+                  <span class="wandercart-title">{item.title}</span>
                 ) : item.logo ? (
                   <img class="project-logo" src={item.logo.src} width={item.logo.width} height={item.logo.height} alt={item.title} loading="lazy" />
                 ) : item.title}
@@ -77,7 +82,7 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
           <p class="description">{item.description}</p>
           <TechStack items={item.technologies} label={item.stackLabel} />
           {item.link && (
-            <a class="detail-link" href={item.link.href}>
+            <a class="detail-link" href={item.link.href} target="_blank" rel="noopener noreferrer">
               {item.link.label}<span aria-hidden="true">↗</span>
             </a>
           )}
@@ -94,6 +99,20 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
     connectedCallback() {
       const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const magnetResets = new Set<() => void>();
+      let scrolling = false;
+      let scrollTimer = 0;
+
+      const suspendMagnet = () => {
+        if (!scrolling) {
+          scrolling = true;
+          for (const reset of magnetResets) reset();
+        }
+        window.clearTimeout(scrollTimer);
+        // Native scroll events keep this suspended throughout Lenis's inertia.
+        scrollTimer = window.setTimeout(() => { scrolling = false; }, 160);
+      };
+
       const cleanups = [...this.querySelectorAll<HTMLElement>('.card-slot')].map((slot) => {
         const card = slot.querySelector<HTMLElement>('.work-card');
         const visual = slot.querySelector<HTMLElement>('.project-visual');
@@ -111,6 +130,7 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
             void video.play().catch(() => {});
           } else {
             video.pause();
+            if (!videoHovered) video.currentTime = 0;
           }
         };
 
@@ -147,10 +167,12 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
           card.style.removeProperty('--magnet-x');
           card.style.removeProperty('--magnet-y');
         };
+        magnetResets.add(reset);
 
         const render = () => {
           frame = 0;
-          // The frame stays fixed; only its inset content follows the pointer.
+          if (scrolling) return;
+          // Measure the stable link area while its media follows the pointer.
           const bounds = visual.getBoundingClientRect();
           const x = Math.max(-1, Math.min(1, (pointerX - bounds.left) / bounds.width * 2 - 1));
           const y = Math.max(-1, Math.min(1, (pointerY - bounds.top) / bounds.height * 2 - 1));
@@ -159,7 +181,8 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
         };
 
         const move = (event: PointerEvent) => {
-          if (!finePointer.matches || reducedMotion.matches || event.pointerType !== 'mouse') return;
+          if (scrolling || !finePointer.matches || reducedMotion.matches || event.pointerType !== 'mouse') return;
+          if (event.clientX === pointerX && event.clientY === pointerY) return;
           pointerX = event.clientX;
           pointerY = event.clientY;
           if (!frame) frame = requestAnimationFrame(render);
@@ -170,12 +193,12 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
         visual.addEventListener('pointercancel', reset);
         visual.addEventListener('focusin', reset);
         window.addEventListener('blur', reset);
-        window.addEventListener('scroll', reset, { passive: true });
         finePointer.addEventListener('change', reset);
         reducedMotion.addEventListener('change', reset);
 
         return () => {
           reset();
+          magnetResets.delete(reset);
           videoObserver?.disconnect();
           video?.pause();
           visual.removeEventListener('pointerenter', playOnHover);
@@ -190,12 +213,19 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
           visual.removeEventListener('pointercancel', reset);
           visual.removeEventListener('focusin', reset);
           window.removeEventListener('blur', reset);
-          window.removeEventListener('scroll', reset);
           finePointer.removeEventListener('change', reset);
           reducedMotion.removeEventListener('change', reset);
         };
       });
-      this.cleanup = () => cleanups.forEach((cleanup) => cleanup());
+      window.addEventListener('wheel', suspendMagnet, { passive: true });
+      window.addEventListener('scroll', suspendMagnet, { passive: true });
+
+      this.cleanup = () => {
+        window.clearTimeout(scrollTimer);
+        window.removeEventListener('wheel', suspendMagnet);
+        window.removeEventListener('scroll', suspendMagnet);
+        cleanups.forEach((cleanup) => cleanup());
+      };
     }
 
     disconnectedCallback() {
@@ -209,6 +239,15 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
 </script>
 
 <style>
+  .project-index,
+  .role,
+  .period,
+  .detail-link,
+  .preview-note,
+  .wip-note {
+    font-family: var(--font-ui);
+  }
+
   .work-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -251,24 +290,47 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
 
   .project-visual {
     position: relative;
+    --focus-color: #fff;
     display: block;
-    aspect-ratio: 1.1;
-    overflow: hidden;
-    isolation: isolate;
-    border: 1px solid var(--divider-subtle);
-    border-radius: 0;
-    background: #202128;
-    box-shadow: 0 12px 30px -18px #000;
-    transition: border-color 250ms ease, box-shadow 350ms ease;
+    min-width: 0;
+    text-decoration: none;
   }
 
   .card-content {
-    position: absolute;
-    inset: -12px;
+    position: relative;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     place-items: center;
+    pointer-events: none;
     filter: grayscale(1);
     transition: filter 600ms ease;
+  }
+
+  .sudo-preview {
+    width: 75%;
+    justify-self: center;
+  }
+
+  .preview-note {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    background: rgb(15 15 15 / 85%);
+    color: #fff;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 250ms ease, transform 250ms ease;
+  }
+
+  .sudo-preview:is(:hover, :focus-visible) .preview-note {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .project-visual:is(:hover, :focus-visible) .card-content {
@@ -278,29 +340,20 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
   .cover {
     display: block;
     width: 100%;
-    height: 100%;
+    max-width: 100%;
+    height: auto;
     min-height: 0;
+    object-fit: contain;
+  }
+
+  .sudo-preview .cover {
+    aspect-ratio: 16 / 10;
     object-fit: cover;
+    object-position: center;
   }
 
   .video-preview {
-    object-fit: contain;
-    padding: 24px;
-    background: #101114;
-  }
-
-  .visual-arrow {
-    position: absolute;
-    right: 1rem;
-    bottom: 1rem;
-    display: grid;
-    place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    background: #171717cc;
-    color: #fff;
-    font-size: 1.2rem;
-    pointer-events: none;
+    max-height: 80svh;
   }
 
   .project-body {
@@ -354,26 +407,31 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
     filter: grayscale(0);
   }
 
-  .wandercart-wordmark {
-    display: block;
-    padding: 0.5rem;
-    background: #fff;
+  .wandercart-title {
+    text-transform: none;
   }
 
   .wandercart-stage {
     display: grid;
     place-items: center;
+    gap: 1rem;
     width: 100%;
-    height: 100%;
-    background: radial-gradient(ellipse at center, #fff 0%, #f3f0ff 65%, #e7dfff 100%);
+    padding-block: clamp(1rem, 3vw, 3rem);
   }
 
   .wandercart-icon {
     display: block;
-    width: clamp(9rem, 19vw, 20rem);
-    max-width: 60%;
+    width: clamp(4.032rem, 8.512vw, 8.96rem);
+    max-width: 26.88%;
     height: auto;
     border-radius: 27%;
+  }
+
+  .wip-note {
+    color: #888;
+    font-size: 0.9rem;
+    font-weight: 400;
+    letter-spacing: 0.12em;
   }
 
   .role,
@@ -509,10 +567,6 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
       transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1), filter 600ms ease;
     }
 
-    .project-visual:hover {
-      border-color: var(--focus-color);
-      box-shadow: 0 22px 36px -18px #000;
-    }
   }
 
   @media (max-width: 55.99rem) {
@@ -530,7 +584,6 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
     .card-slot:nth-child(even) .project-visual {
       grid-column: 1;
       grid-row: 1;
-      aspect-ratio: 1.3;
     }
 
     .project-body,
@@ -545,7 +598,7 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
     }
 
     .wandercart-icon {
-      width: 42%;
+      width: 18.816%;
     }
 
     .document-title {
@@ -556,7 +609,8 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
   @media (prefers-reduced-motion: reduce) {
     .project-visual,
     .card-content,
-    .project-logo {
+    .project-logo,
+    .preview-note {
       transition: none;
     }
   }

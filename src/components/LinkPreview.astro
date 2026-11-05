@@ -16,7 +16,7 @@ const { href, label, title, description, site, image } = Astro.props;
 
 <div class="link-preview">
   <p class="label">{label}</p>
-  <a class="preview-card" href={href}>
+  <a class="preview-card" href={href} target="_blank" rel="noopener noreferrer">
     <Image src={image} alt="" width={320} loading="lazy" />
     <span class="content">
       <span class="site">{site} <span aria-hidden="true">↗</span></span>
@@ -38,6 +38,7 @@ const { href, label, title, description, site, image } = Astro.props;
   }
 
   .preview-card {
+    --focus-color: #fff;
     display: grid;
     grid-template-columns: 8rem minmax(0, 1fr);
     overflow: hidden;
