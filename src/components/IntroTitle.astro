@@ -53,7 +53,6 @@
     :global([data-native-intro]) .fullstack,
     :global([data-native-intro]) .dev {
       animation: fullstack-scroll auto linear both;
-      animation-timeline: scroll(root block);
       animation-range: var(--intro-scroll-start) var(--intro-scroll-end);
     }
 
@@ -85,6 +84,7 @@
       if (!intro || !stack || !fullstack || !dev) return;
       const columns = intro.querySelector<HTMLElement>('[data-intro-guide="columns"]');
       const rows = intro.querySelector<HTMLElement>('[data-intro-guide="rows"]');
+      const animatedElements = [fullstack, dev, columns, rows].filter((element): element is HTMLElement => !!element);
 
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       const nativeScroll = CSS.supports('animation-timeline', 'scroll(root block)')
@@ -146,6 +146,12 @@
           intro.style.setProperty('--intro-scroll-start', `${start}px`);
           intro.style.setProperty('--intro-scroll-end', `${start + distance}px`);
           intro.setAttribute('data-native-intro', '');
+          // Keep these out of the CSS minifier: it can merge the timeline into
+          // an animation shorthand that browsers reject in production.
+          for (const element of animatedElements) {
+            element.style.animationDuration = 'auto';
+            element.style.animationTimeline = 'scroll(root block)';
+          }
         } else {
           progress = targetProgress();
           render();
@@ -175,6 +181,10 @@
         dev.style.removeProperty('transform');
         columns?.style.removeProperty('transform');
         rows?.style.removeProperty('transform');
+        for (const element of animatedElements) {
+          element.style.removeProperty('animation-duration');
+          element.style.removeProperty('animation-timeline');
+        }
         intro.removeAttribute('data-native-intro');
         for (const property of ['--intro-width', '--intro-height', '--intro-scroll-start', '--intro-scroll-end']) {
           intro.style.removeProperty(property);
