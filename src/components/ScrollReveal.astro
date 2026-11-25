@@ -6,7 +6,8 @@
 
     connectedCallback() {
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-      if (reducedMotion.matches || !('IntersectionObserver' in window)) return;
+      const root = document.documentElement;
+      if (reducedMotion.matches || !('IntersectionObserver' in window) || !root.hasAttribute('data-reveal-enabled')) return;
 
       const elements = [...document.querySelectorAll<HTMLElement>('[data-enter]')];
       const observer = new IntersectionObserver((entries) => {
@@ -46,14 +47,15 @@
 
       for (const element of elements) {
         const bounds = element.getBoundingClientRect();
-        // Keep anything already on screen visible when this deferred script
-        // starts; hiding it now creates a visible flash on a cold load.
-        element.dataset.reveal = bounds.top < window.innerHeight
+        // The head prepares hidden states before paint. Items already in view
+        // still get their first reveal; only content above the viewport skips it.
+        element.dataset.reveal = bounds.bottom <= 0
           ? 'instant'
           : 'pending';
         observer.observe(element);
         resetObserver.observe(element);
       }
+      document.dispatchEvent(new Event('portfolio:reveals-ready'));
 
       // Keyboard focus should never land on an invisible link.
       const revealFocused = (event: FocusEvent) => {
@@ -67,6 +69,7 @@
         if (!reducedMotion.matches) return;
         observer.disconnect();
         resetObserver.disconnect();
+        root.removeAttribute('data-reveal-enabled');
         for (const element of elements) element.dataset.reveal = 'instant';
       };
 
@@ -78,6 +81,7 @@
         resetObserver.disconnect();
         document.removeEventListener('focusin', revealFocused);
         reducedMotion.removeEventListener('change', updatePreference);
+        root.removeAttribute('data-reveal-enabled');
         for (const element of elements) {
           delete element.dataset.reveal;
         }

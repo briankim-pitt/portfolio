@@ -22,6 +22,19 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script is:inline>
       {
+        // Prepare reveals before the first paint, without hiding content when
+        // JavaScript is disabled, motion is reduced, or initialization fails.
+        if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          document.documentElement.setAttribute('data-reveal-enabled', '');
+          const fallback = window.setTimeout(() => {
+            document.documentElement.removeAttribute('data-reveal-enabled');
+          }, 3000);
+          document.addEventListener('portfolio:reveals-ready', () => window.clearTimeout(fallback), { once: true });
+        }
+      }
+    </script>
+    <script is:inline>
+      {
         // Set this before the browser lays out the sticky layers or restores scroll.
         const navigation = performance.getEntriesByType('navigation')[0];
         const reloading = navigation?.type === 'reload';
@@ -43,9 +56,9 @@ const {
   </head>
   <body>
     <slot />
+    <ScrollReveal />
     <CircleCursor />
     <SmoothScroll />
-    <ScrollReveal />
     <Analytics />
   </body>
 </html>
@@ -107,11 +120,12 @@ const {
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    [data-enter][data-reveal='pending'] {
+    html[data-reveal-enabled] [data-enter]:not([data-reveal]),
+    html[data-reveal-enabled] [data-enter][data-reveal='pending'] {
       opacity: 0;
     }
 
-    [data-enter][data-reveal='visible'] {
+    html[data-reveal-enabled] [data-enter][data-reveal='visible'] {
       animation: enter-view 1000ms cubic-bezier(0.3, 0, 0.3, 1) var(--enter-delay, 0ms) backwards;
     }
   }
