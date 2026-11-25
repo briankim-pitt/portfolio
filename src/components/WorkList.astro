@@ -158,9 +158,22 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
       const blurPage = () => { pageFocused = false; updatePlayback(); };
       const focusPage = () => { pageFocused = true; schedulePlayback(); };
       const playbackObserver = new ResizeObserver(schedulePlayback);
+      const revealFrame = (event: Event) => {
+        const video = event.currentTarget as HTMLVideoElement;
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          video.setAttribute('data-frame-ready', '');
+        }
+      };
       for (const { video, visual } of previews) {
         playbackObserver.observe(visual);
         video.addEventListener('loadedmetadata', schedulePlayback);
+        // The row can finish its scroll reveal before a cold video request has
+        // decoded a frame. Give the video its own fade when pixels are ready.
+        video.addEventListener('loadeddata', revealFrame);
+        video.addEventListener('playing', revealFrame);
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          video.setAttribute('data-frame-ready', '');
+        }
       }
       window.addEventListener('scroll', schedulePlayback, { passive: true });
       window.addEventListener('resize', schedulePlayback);
@@ -245,6 +258,8 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
           video.pause();
           visual.removeAttribute('data-preview-active');
           video.removeEventListener('loadedmetadata', schedulePlayback);
+          video.removeEventListener('loadeddata', revealFrame);
+          video.removeEventListener('playing', revealFrame);
         }
         window.removeEventListener('scroll', schedulePlayback);
         window.removeEventListener('resize', schedulePlayback);
@@ -385,6 +400,17 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
 
   .video-preview {
     max-height: 80svh;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html[data-reveal-enabled]) .video-preview {
+      opacity: 0;
+      transition: opacity 1000ms cubic-bezier(0.3, 0, 0.3, 1);
+    }
+
+    :global(html[data-reveal-enabled]) .video-preview[data-frame-ready] {
+      opacity: 1;
+    }
   }
 
   .project-body {
