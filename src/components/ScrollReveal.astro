@@ -46,7 +46,9 @@
 
       for (const element of elements) {
         const bounds = element.getBoundingClientRect();
-        element.dataset.reveal = bounds.top < 0 || bounds.bottom <= window.innerHeight
+        // Keep anything already on screen visible when this deferred script
+        // starts; hiding it now creates a visible flash on a cold load.
+        element.dataset.reveal = bounds.top < window.innerHeight
           ? 'instant'
           : 'pending';
         observer.observe(element);

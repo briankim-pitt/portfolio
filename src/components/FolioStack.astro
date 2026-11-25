@@ -1,5 +1,21 @@
 <folio-stack-controller hidden></folio-stack-controller>
 
+<!-- Establish the layered layout while parsing, before deferred modules load. -->
+<script is:inline>
+  {
+    const stack = document.currentScript.closest('main');
+    const intro = stack?.querySelector('[data-base-layer]');
+    const dev = stack?.querySelector('.dev-work');
+    const contact = stack?.querySelector('.contact-folio');
+    if (stack && intro && dev && contact) {
+      stack.style.setProperty('--intro-height', `${intro.offsetHeight}px`);
+      stack.style.setProperty('--dev-height', `${dev.offsetHeight}px`);
+      stack.style.setProperty('--contact-height', `${contact.offsetHeight}px`);
+      stack.setAttribute('data-stack-ready', '');
+    }
+  }
+</script>
+
 <script>
   class FolioStackController extends HTMLElement {
     private cleanup?: () => void;
