@@ -102,6 +102,73 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
       const magnetResets = new Set<() => void>();
       let scrolling = false;
       let scrollTimer = 0;
+      const previews = [...this.querySelectorAll<HTMLVideoElement>('video')].map((video) => ({
+        video,
+        visual: video.closest<HTMLElement>('.project-visual')!,
+      }));
+      let activePreview: typeof previews[number] | undefined;
+      let playbackFrame = 0;
+      let pageFocused = true;
+
+      const updatePlayback = () => {
+        cancelAnimationFrame(playbackFrame);
+        playbackFrame = 0;
+        let next: typeof activePreview;
+        let closest = Infinity;
+        const viewportHeight = document.documentElement.clientHeight;
+        const viewportWidth = document.documentElement.clientWidth;
+
+        if (!document.hidden && pageFocused && !reducedMotion.matches) {
+          for (const preview of previews) {
+            // The link stays still while its contents move magnetically.
+            const bounds = preview.visual.getBoundingClientRect();
+            if (!bounds.width || !bounds.height) continue;
+            const visibleHeight = Math.max(0, Math.min(bounds.bottom, viewportHeight) - Math.max(bounds.top, 0));
+            const visibleWidth = Math.max(0, Math.min(bounds.right, viewportWidth) - Math.max(bounds.left, 0));
+            const visibleRatio = visibleHeight * visibleWidth / (bounds.height * bounds.width);
+            const center = (bounds.top + bounds.bottom) / 2;
+            const distance = Math.abs(center - viewportHeight / 2);
+            // Require most of the preview to be visible and near the viewport's
+            // center. If two qualify, only the closer preview plays.
+            if (visibleRatio >= 0.55 && center >= viewportHeight * 0.2
+              && center <= viewportHeight * 0.8 && distance < closest) {
+              next = preview;
+              closest = distance;
+            }
+          }
+        }
+
+        if (next === activePreview) return;
+        if (activePreview) {
+          activePreview.video.pause();
+          activePreview.video.currentTime = 0;
+          activePreview.visual.removeAttribute('data-preview-active');
+        }
+        activePreview = next;
+        if (activePreview) {
+          activePreview.video.muted = true;
+          activePreview.visual.setAttribute('data-preview-active', '');
+          void activePreview.video.play().catch(() => {});
+        }
+      };
+
+      const schedulePlayback = () => {
+        if (!playbackFrame) playbackFrame = requestAnimationFrame(updatePlayback);
+      };
+      const blurPage = () => { pageFocused = false; updatePlayback(); };
+      const focusPage = () => { pageFocused = true; schedulePlayback(); };
+      const playbackObserver = new ResizeObserver(schedulePlayback);
+      for (const { video, visual } of previews) {
+        playbackObserver.observe(visual);
+        video.addEventListener('loadedmetadata', schedulePlayback);
+      }
+      window.addEventListener('scroll', schedulePlayback, { passive: true });
+      window.addEventListener('resize', schedulePlayback);
+      window.addEventListener('blur', blurPage);
+      window.addEventListener('focus', focusPage);
+      document.addEventListener('visibilitychange', schedulePlayback);
+      reducedMotion.addEventListener('change', schedulePlayback);
+      schedulePlayback();
 
       const suspendMagnet = () => {
         if (!scrolling) {
@@ -120,46 +187,6 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
         let frame = 0;
         let pointerX = 0;
         let pointerY = 0;
-        const video = slot.querySelector<HTMLVideoElement>('video');
-        let videoInView = false;
-        let videoHovered = false;
-
-        const updatePlayback = () => {
-          if (!video) return;
-          if (videoHovered && videoInView && finePointer.matches && !document.hidden && !reducedMotion.matches) {
-            void video.play().catch(() => {});
-          } else {
-            video.pause();
-            if (!videoHovered) video.currentTime = 0;
-          }
-        };
-
-        const videoObserver = video ? new IntersectionObserver(([entry]) => {
-          videoInView = entry.isIntersecting;
-          if (!videoInView) videoHovered = false;
-          updatePlayback();
-        }, { threshold: 0 }) : undefined;
-
-        const playOnHover = (event: PointerEvent) => {
-          videoHovered = event.pointerType === 'mouse';
-          updatePlayback();
-        };
-
-        const stopHover = () => {
-          videoHovered = false;
-          updatePlayback();
-        };
-
-        if (video) {
-          videoObserver?.observe(video);
-          visual.addEventListener('pointerenter', playOnHover);
-          visual.addEventListener('pointerleave', stopHover);
-          visual.addEventListener('pointercancel', stopHover);
-          window.addEventListener('blur', stopHover);
-          document.addEventListener('visibilitychange', updatePlayback);
-          finePointer.addEventListener('change', stopHover);
-          reducedMotion.addEventListener('change', updatePlayback);
-        }
 
         const reset = () => {
           cancelAnimationFrame(frame);
@@ -199,15 +226,6 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
         return () => {
           reset();
           magnetResets.delete(reset);
-          videoObserver?.disconnect();
-          video?.pause();
-          visual.removeEventListener('pointerenter', playOnHover);
-          visual.removeEventListener('pointerleave', stopHover);
-          visual.removeEventListener('pointercancel', stopHover);
-          window.removeEventListener('blur', stopHover);
-          document.removeEventListener('visibilitychange', updatePlayback);
-          finePointer.removeEventListener('change', stopHover);
-          reducedMotion.removeEventListener('change', updatePlayback);
           visual.removeEventListener('pointermove', move);
           visual.removeEventListener('pointerleave', reset);
           visual.removeEventListener('pointercancel', reset);
@@ -221,6 +239,19 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
       window.addEventListener('scroll', suspendMagnet, { passive: true });
 
       this.cleanup = () => {
+        cancelAnimationFrame(playbackFrame);
+        playbackObserver.disconnect();
+        for (const { video, visual } of previews) {
+          video.pause();
+          visual.removeAttribute('data-preview-active');
+          video.removeEventListener('loadedmetadata', schedulePlayback);
+        }
+        window.removeEventListener('scroll', schedulePlayback);
+        window.removeEventListener('resize', schedulePlayback);
+        window.removeEventListener('blur', blurPage);
+        window.removeEventListener('focus', focusPage);
+        document.removeEventListener('visibilitychange', schedulePlayback);
+        reducedMotion.removeEventListener('change', schedulePlayback);
         window.clearTimeout(scrollTimer);
         window.removeEventListener('wheel', suspendMagnet);
         window.removeEventListener('scroll', suspendMagnet);
@@ -333,7 +364,7 @@ const previewWidths = (sourceWidth: number) => [...new Set([400, 800, 1200, 1600
     transform: translateY(0);
   }
 
-  .project-visual:is(:hover, :focus-visible) .card-content {
+  .project-visual:is(:hover, :focus-visible, [data-preview-active]) .card-content {
     filter: grayscale(0);
   }
 

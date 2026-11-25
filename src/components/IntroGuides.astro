@@ -25,6 +25,7 @@
     inset: -20% var(--page-gutter);
     display: flex;
     justify-content: space-between;
+    will-change: transform;
   }
 
   .guide-columns span {
@@ -35,6 +36,30 @@
   .guide-rows {
     position: absolute;
     inset: 0;
+    will-change: transform;
+  }
+
+  @keyframes guide-columns-scroll {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(calc(var(--intro-width) * -0.025), 0, 0); }
+  }
+
+  @keyframes guide-rows-scroll {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(calc(var(--intro-width) * -0.025), calc(var(--intro-height) * -0.06), 0); }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global([data-native-intro]) .guide-columns,
+    :global([data-native-intro]) .guide-rows {
+      animation: guide-columns-scroll auto linear both;
+      animation-timeline: scroll(root block);
+      animation-range: var(--intro-scroll-start) var(--intro-scroll-end);
+    }
+
+    :global([data-native-intro]) .guide-rows {
+      animation-name: guide-rows-scroll;
+    }
   }
 
   .baseline {
